@@ -15,6 +15,7 @@
 ### Security
 
 - POSIX manifest 输出强制 `0600`；Windows 明确记录继承目录 ACL 未验证，绝对扫描根路径不写入清单。
+- 两个 CLI 明确使用 UTF-8 JSON 输出与诊断契约，不再受 Windows cp1252 等宿主控制台编码影响。
 - 日期启用 Draft 2020-12 format checker 和真实日历/区间语义检查。
 - 运行时、测试和开发依赖均提供完整 SHA-256 锁文件；提交可复现 CycloneDX SBOM，并在 CI 运行 `pip-audit`。
 - GitHub Actions 固定到完整 commit SHA；Tag 工作流生成制品、校验和、SBOM 与 GitHub build-provenance attestation。

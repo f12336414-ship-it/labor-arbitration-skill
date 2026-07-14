@@ -192,7 +192,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 
@@ -220,7 +220,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 
@@ -249,7 +249,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 
@@ -278,7 +278,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 
@@ -306,7 +306,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 
@@ -334,7 +334,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 
@@ -368,7 +368,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 
@@ -410,7 +410,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 
@@ -433,7 +433,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 
@@ -461,7 +461,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 
@@ -489,7 +489,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 
@@ -537,7 +537,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                     ],
                     cwd=SKILL_ROOT,
                     capture_output=True,
-                    text=True,
+                encoding="utf-8",
                     check=False,
                     timeout=15,
                 )
@@ -573,7 +573,7 @@ class BuildIntakeManifestTests(unittest.TestCase):
                 ],
                 cwd=SKILL_ROOT,
                 capture_output=True,
-                text=True,
+                encoding="utf-8",
                 check=False,
             )
 

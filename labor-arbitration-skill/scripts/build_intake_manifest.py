@@ -49,6 +49,14 @@ class ScanSafetyError(RuntimeError):
     """Raised when ingestion cannot safely produce a complete manifest."""
 
 
+def configure_utf8_stdio() -> None:
+    """Make CLI diagnostics independent of the host console code page."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="strict")
+
+
 def ensure_before_deadline(deadline: float) -> None:
     if time.monotonic() >= deadline:
         raise ScanSafetyError("SCAN_TIMEOUT: scan deadline expired.")
@@ -480,6 +488,7 @@ def write_manifest_atomically(output: Path, manifest: dict) -> None:
 
 
 def main() -> int:
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input_directory", type=Path)
     parser.add_argument("--output", type=Path, required=True)

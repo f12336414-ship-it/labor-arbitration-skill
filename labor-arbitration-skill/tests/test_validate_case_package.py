@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -31,7 +32,12 @@ def load_validator():
 VALIDATOR = load_validator()
 
 
-def run_validator(package, include_intake_manifest=True, intake_manifest=None):
+def run_validator(
+    package,
+    include_intake_manifest=True,
+    intake_manifest=None,
+    extra_environment=None,
+):
     with tempfile.TemporaryDirectory() as temp_dir:
         package_path = Path(temp_dir) / "case-package.json"
         package_path.write_text(
@@ -51,7 +57,12 @@ def run_validator(package, include_intake_manifest=True, intake_manifest=None):
             command,
             cwd=SKILL_ROOT,
             capture_output=True,
-            text=True,
+            encoding="utf-8",
+            env=(
+                None
+                if extra_environment is None
+                else {**os.environ, **extra_environment}
+            ),
             check=False,
         )
 
@@ -64,12 +75,31 @@ def run_validator_text(text):
             [sys.executable, str(SCRIPT), str(package_path)],
             cwd=SKILL_ROOT,
             capture_output=True,
-            text=True,
+            encoding="utf-8",
             check=False,
         )
 
 
 class ValidateCasePackageTests(unittest.TestCase):
+    def test_emits_utf8_json_when_the_inherited_stdio_encoding_is_cp1252(self):
+        package = make_valid_reference_integrity_package()
+        package["source_artifacts"][0]["content_hash_status"] = "VERIFIED"
+
+        result = run_validator(
+            package,
+            extra_environment={"PYTHONIOENCODING": "cp1252"},
+        )
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertNotIn("UnicodeEncodeError", result.stderr)
+        report = json.loads(result.stdout)
+        source_finding = next(
+            item
+            for item in report["findings"]
+            if item["code"] == "SOURCE_HASH_STATUS_INVALID"
+        )
+        self.assertIn("来源哈希状态", source_finding["message_zh"])
+
     def test_reports_truthful_scope_for_reference_integrity_validation(self):
         package = make_valid_reference_integrity_package()
 
@@ -715,7 +745,7 @@ class ValidateCasePackageTests(unittest.TestCase):
             [sys.executable, str(SCRIPT), str(missing_path)],
             cwd=SKILL_ROOT,
             capture_output=True,
-            text=True,
+            encoding="utf-8",
             check=False,
         )
 

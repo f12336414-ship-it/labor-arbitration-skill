@@ -161,6 +161,14 @@ class InputChangedError(OSError):
     """Raised when an input changes while it is being read."""
 
 
+def configure_utf8_stdio() -> None:
+    """Make the JSON CLI contract independent of the host console code page."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="strict")
+
+
 def calculate_snapshot(package: dict) -> str:
     snapshot_content = {
         key: value
@@ -1313,6 +1321,7 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
 
 
 def main() -> int:
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("case_package", type=Path)
     parser.add_argument("--intake-manifest", type=Path)
