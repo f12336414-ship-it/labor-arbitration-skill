@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "product_version": "0.2.0",
+  "product_name": "Labor Arbitration Reference-Integrity Core",
+  "technical_identifier": "labor-arbitration-skill",
+  "highest_automated_state": "REFERENCE_INTEGRITY_VALIDATED",
+  "mandatory_next_state": "PENDING_LEGAL_REVIEW",
+  "submission_ready_state_supported": false,
+  "capabilities": [
+    {
+      "id": "LOCAL_INGESTION_BYTE_OBSERVATION",
+      "status": "IMPLEMENTED",
+      "guarantee": "Records size and SHA-256 for bytes read from stable opened regular-file descriptors within configured bounds.",
+      "does_not_guarantee": "Authenticity, semantic meaning, later immutability, malware safety, or completeness outside the scanned tree."
+    },
+    {
+      "id": "PACKAGE_STRUCTURE_VALIDATION",
+      "status": "IMPLEMENTED",
+      "guarantee": "Checks required v1.2 fields, supported values, bounded JSON input, and deterministic error output.",
+      "does_not_guarantee": "Truth of any field value or legal sufficiency."
+    },
+    {
+      "id": "REFERENCE_INTEGRITY",
+      "status": "IMPLEMENTED",
+      "guarantee": "Checks identifiers, cross-references, raw-file manifest equality, and canonical snapshot hashes.",
+      "does_not_guarantee": "Evidence support, legal applicability, or document correctness."
+    },
+    {
+      "id": "GENERIC_ARITHMETIC_RECOMPUTATION",
+      "status": "IMPLEMENTED",
+      "guarantee": "Recomputes SUM_DECIMAL_INPUTS_V1 using decimal strings and ROUND_HALF_UP_2.",
+      "does_not_guarantee": "A labor-law formula, correct wage base, correct period, cap, remedy, tax treatment, or non-duplication."
+    },
+    {
+      "id": "OFFICIAL_SOURCE_CANDIDATE_HOST_FILTER",
+      "status": "PARTIAL",
+      "guarantee": "Requires HTTPS and matches declared publisher codes to a small reviewed hostname allowlist.",
+      "does_not_guarantee": "URL availability, redirect safety, publisher authorship, page contents, hash provenance, currentness, amendment history, exact quotation, or case applicability."
+    },
+    {
+      "id": "EVIDENCE_LOCATION_METADATA",
+      "status": "PARTIAL",
+      "guarantee": "Requires a typed, non-empty location and a reference to an observed raw file.",
+      "does_not_guarantee": "That the location exists, the cited passage was extracted correctly, or the evidence supports the fact."
+    },
+    {
+      "id": "LIMITATION_DATA_CAPTURE",
+      "status": "PARTIAL",
+      "guarantee": "Requires per-claim limitation fields and evidence references.",
+      "does_not_guarantee": "Any deadline or within/outside conclusion; those fields must remain UNVERIFIED."
+    },
+    {
+      "id": "CLAIM_REFERENCE_GRAPH",
+      "status": "PARTIAL",
+      "guarantee": "Links declared claim elements to fact, evidence, rule, and calculation identifiers.",
+      "does_not_guarantee": "A complete claim-element catalog, burden allocation, legal sufficiency, or remedy compatibility."
+    },
+    {
+      "id": "LEGAL_SOURCE_FETCH_FREEZE_AND_VERSIONING",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "BEIJING_AUTHORITATIVE_RULE_PACK",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "LIMITATION_ENGINE",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "PROFESSIONAL_LABOR_CLAIM_CALCULATORS",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "EVIDENCE_EXTRACTION_OCR_TRANSCRIPTION_AND_SEMANTICS",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "CLAIM_ELEMENT_CATALOG_AND_CONFLICT_MATRIX",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "JURISDICTION_AND_ARBITRATION_COMMISSION_DETERMINATION",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "EMPLOYER_LEGAL_IDENTITY_VERIFICATION",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "FILING_DOCUMENT_GENERATION",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "AUTHENTICATED_APPROVAL_RBAC_SIGNATURE_AND_AUDIT",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "REAL_CASE_LEGAL_EVALUATION_CORPUS",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "MULTI_USER_SAAS_PRIVACY_BACKUP_AND_RETENTION",
+      "status": "NOT_IMPLEMENTED"
+    }
+  ]
+}

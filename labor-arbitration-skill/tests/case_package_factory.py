@@ -3,7 +3,10 @@ import hashlib
 import json
 
 
-INTEGRITY_SEMANTICS = "Hashes verify bytes observed at ingestion, not authenticity."
+INTEGRITY_SEMANTICS = (
+    "Hashes and sizes describe bytes read from stable opened file descriptors during "
+    "ingestion; they do not prove authenticity, semantic meaning, or later immutability."
+)
 
 
 def calculate_snapshot(package):
@@ -31,9 +34,21 @@ def calculate_json_snapshot(value):
 
 
 def make_intake_manifest(package):
+    total_bytes = sum(item["size_bytes"] for item in package["raw_files"])
     return {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "integrity_semantics": INTEGRITY_SEMANTICS,
+        "scan_policy": {
+            "max_depth": 20,
+            "max_file_bytes": 100 * 1024 * 1024,
+            "max_files": 10_000,
+            "max_total_bytes": 1024 * 1024 * 1024,
+            "timeout_seconds": 60.0,
+        },
+        "summary": {
+            "file_count": len(package["raw_files"]),
+            "total_bytes": total_bytes,
+        },
         "files": copy.deepcopy(package["raw_files"]),
     }
 
@@ -59,10 +74,10 @@ def calculate_document_snapshot(package):
     return calculate_json_snapshot({"statements": package.get("statements", [])})
 
 
-def make_valid_machine_candidate():
+def make_valid_reference_integrity_package():
     package = {
-        "schema_version": "1.1",
-        "requested_state": "MACHINE_VALIDATED_CANDIDATE",
+        "schema_version": "1.2",
+        "requested_state": "REFERENCE_INTEGRITY_VALIDATED",
         "jurisdiction": {"country": "CN", "province": "Beijing"},
         "dependency_snapshot_sha256": "d" * 64,
         "document_snapshot_sha256": "e" * 64,
@@ -73,7 +88,7 @@ def make_valid_machine_candidate():
                 "extension": ".txt",
                 "size_bytes": 18,
                 "sha256": "f" * 64,
-                "integrity_status": "INGESTION_INTEGRITY_VERIFIED",
+                "integrity_status": "INGESTION_BYTES_OBSERVED",
             }
         ],
         "source_artifacts": [
@@ -81,6 +96,7 @@ def make_valid_machine_candidate():
                 "source_id": "SRC-001",
                 "canonical_url": "https://flk.npc.gov.cn/detail?id=synthetic-test-only",
                 "publisher": "Synthetic official-source fixture",
+                "publisher_code": "NATIONAL_LAWS_REGULATIONS_DATABASE",
                 "document_title": "Synthetic labor rule for tests",
                 "document_type": "LAW",
                 "legal_hierarchy": "LAW",
@@ -88,6 +104,7 @@ def make_valid_machine_candidate():
                 "jurisdiction": {"country": "CN", "province": "Beijing"},
                 "retrieved_at": "2026-07-14T00:00:00Z",
                 "content_sha256": "1" * 64,
+                "content_hash_status": "DECLARED_UNVERIFIED",
             }
         ],
         "legal_rules": [
@@ -98,10 +115,10 @@ def make_valid_machine_candidate():
                 "jurisdiction": {"country": "CN", "province": "Beijing"},
                 "effective_from": "2020-01-01",
                 "effective_to": None,
-                "status": "VERIFIED_CURRENT",
-                "verified_at": "2026-07-14T00:00:00Z",
-                "verified_by": "LEGAL-REVIEWER-001",
-                "verification_actor_type": "HUMAN",
+                "status": "UNVERIFIED_CANDIDATE",
+                "verified_at": None,
+                "verified_by": None,
+                "verification_actor_type": None,
                 "supersedes": [],
                 "superseded_by": None,
             }
@@ -111,7 +128,7 @@ def make_valid_machine_candidate():
                 "evidence_id": "E-001",
                 "raw_id": "RAW-0001",
                 "location": {"type": "line", "value": "1"},
-                "integrity_status": "INGESTION_INTEGRITY_VERIFIED",
+                "integrity_status": "INGESTION_BYTES_OBSERVED",
             }
         ],
         "facts": [
@@ -128,10 +145,10 @@ def make_valid_machine_candidate():
                     {
                         "element_id": "ELEMENT-001",
                         "assertion_status": "ASSERTED",
-                        "proof_status": "SUPPORTED",
+                        "proof_status": "EVIDENCE_LINKED_UNVERIFIED",
                         "burden_stage": "APPLICANT_INITIAL",
                         "evidence_controller": "APPLICANT",
-                        "initial_burden_satisfied": True,
+                        "initial_burden_status": "UNVERIFIED",
                         "production_request": None,
                         "adverse_consequence_candidate": False,
                         "fact_ids": ["FACT-001"],
@@ -146,10 +163,10 @@ def make_valid_machine_candidate():
                     "interruption_events": [],
                     "suspension_intervals": [],
                     "special_rule": None,
-                    "calculated_deadline": "2027-01-01",
-                    "deadline_status": "WITHIN_LIMITATION",
+                    "calculated_deadline": None,
+                    "deadline_status": "UNVERIFIED",
                     "evidence_ids": ["E-001"],
-                    "review_status": "REVIEWED",
+                    "review_status": "PENDING_LEGAL_REVIEW",
                 },
                 "calculation_ids": ["CALC-001"],
             }
@@ -159,7 +176,7 @@ def make_valid_machine_candidate():
                 "calculation_id": "CALC-001",
                 "calculator_version": "1.0.0",
                 "formula_id": "SUM_DECIMAL_INPUTS_V1",
-                "status": "EXACT_GIVEN_ASSUMPTIONS",
+                "status": "ARITHMETIC_RECOMPUTED",
                 "inputs": [
                     {"name": "amount", "value": "100.00", "evidence_id": "E-001"}
                 ],
@@ -181,10 +198,10 @@ def make_valid_machine_candidate():
         ],
         "adversarial_findings": [],
         "privacy_review": {
-            "status": "COMPLETED",
-            "reviewed_by": "PRIVACY-REVIEWER-001",
-            "reviewed_at": "2026-07-14T00:00:00Z",
-            "reviewer_actor_type": "HUMAN",
+            "status": "EXTERNAL_REVIEW_REQUIRED",
+            "reviewed_by": None,
+            "reviewed_at": None,
+            "reviewer_actor_type": None,
         },
         "approvals": [],
     }
@@ -195,3 +212,8 @@ def make_valid_machine_candidate():
     package["document_snapshot_sha256"] = calculate_document_snapshot(package)
     package["package_snapshot_sha256"] = calculate_snapshot(package)
     return package
+
+
+def make_valid_machine_candidate():
+    """Compatibility test-helper name returning the current v1.2 safe fixture."""
+    return make_valid_reference_integrity_package()

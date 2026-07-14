@@ -1,20 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/blob/main/labor-arbitration-skill/references/case-package.schema.json",
-  "title": "Labor arbitration reliability case package",
-  "description": "Structural schema for version 1.1. The Python validator remains authoritative for semantic promotion gates.",
+  "title": "Labor arbitration reference-integrity case package",
+  "description": "Structural schema for version 1.2. Passing this schema or the Python validator does not verify legal correctness, source currentness, evidence meaning, limitation, jurisdiction, professional claim amounts, privacy compliance, human identity, or submission readiness.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "requested_state"],
   "properties": {
-    "schema_version": {"const": "1.1"},
+    "schema_version": {"const": "1.2"},
     "requested_state": {
       "enum": [
         "INTERNAL_ANALYSIS",
         "DRAFT",
         "REVIEW_REQUIRED",
-        "MACHINE_VALIDATED_CANDIDATE",
-        "HUMAN_APPROVED_FOR_SUBMISSION",
+        "REFERENCE_INTEGRITY_VALIDATED",
         "REVALIDATION_REQUIRED"
       ]
     },
@@ -23,64 +22,30 @@
     "document_snapshot_sha256": {"$ref": "#/$defs/sha256"},
     "intake_manifest_sha256": {"$ref": "#/$defs/sha256"},
     "package_snapshot_sha256": {"$ref": "#/$defs/sha256"},
-    "raw_files": {
-      "type": "array",
-      "items": {"$ref": "#/$defs/raw_file"}
-    },
+    "raw_files": {"type": "array", "items": {"$ref": "#/$defs/raw_file"}},
     "source_artifacts": {
       "type": "array",
       "items": {"$ref": "#/$defs/source_artifact"}
     },
-    "legal_rules": {
-      "type": "array",
-      "items": {"$ref": "#/$defs/legal_rule"}
-    },
-    "evidence": {
-      "type": "array",
-      "items": {"$ref": "#/$defs/evidence"}
-    },
-    "facts": {
-      "type": "array",
-      "items": {"$ref": "#/$defs/fact"}
-    },
-    "claims": {
-      "type": "array",
-      "items": {"$ref": "#/$defs/claim"}
-    },
+    "legal_rules": {"type": "array", "items": {"$ref": "#/$defs/legal_rule"}},
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "facts": {"type": "array", "items": {"$ref": "#/$defs/fact"}},
+    "claims": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
     "calculations": {
       "type": "array",
       "items": {"$ref": "#/$defs/calculation"}
     },
-    "conflicts": {
-      "type": "array",
-      "items": {"type": "object"}
-    },
-    "statements": {
-      "type": "array",
-      "items": {"$ref": "#/$defs/statement"}
-    },
-    "adversarial_findings": {
-      "type": "array",
-      "items": {"type": "object"}
-    },
+    "conflicts": {"type": "array", "items": {"$ref": "#/$defs/conflict"}},
+    "statements": {"type": "array", "items": {"$ref": "#/$defs/statement"}},
+    "adversarial_findings": {"type": "array", "items": {"type": "object"}},
     "privacy_review": {"$ref": "#/$defs/privacy_review"},
-    "approvals": {
-      "type": "array",
-      "items": {"$ref": "#/$defs/approval"}
-    },
+    "approvals": {"type": "array", "maxItems": 0},
     "notes": {"type": "string"}
   },
   "allOf": [
     {
       "if": {
-        "properties": {
-          "requested_state": {
-            "enum": [
-              "MACHINE_VALIDATED_CANDIDATE",
-              "HUMAN_APPROVED_FOR_SUBMISSION"
-            ]
-          }
-        },
+        "properties": {"requested_state": {"const": "REFERENCE_INTEGRITY_VALIDATED"}},
         "required": ["requested_state"]
       },
       "then": {
@@ -107,15 +72,8 @@
     }
   ],
   "$defs": {
-    "sha256": {
-      "type": "string",
-      "pattern": "^[0-9A-Fa-f]{64}$"
-    },
-    "identifier": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 200
-    },
+    "sha256": {"type": "string", "pattern": "^[0-9A-Fa-f]{64}$"},
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 200},
     "decimal_text": {
       "type": "string",
       "maxLength": 100,
@@ -126,8 +84,8 @@
       "additionalProperties": false,
       "required": ["country", "province"],
       "properties": {
-        "country": {"type": "string"},
-        "province": {"type": "string"}
+        "country": {"type": "string", "minLength": 1},
+        "province": {"type": "string", "minLength": 1}
       }
     },
     "raw_file": {
@@ -147,38 +105,53 @@
         "extension": {"type": "string"},
         "size_bytes": {"type": "integer", "minimum": 0},
         "sha256": {"$ref": "#/$defs/sha256"},
-        "integrity_status": {"const": "INGESTION_INTEGRITY_VERIFIED"}
+        "integrity_status": {"const": "INGESTION_BYTES_OBSERVED"}
       }
     },
     "source_artifact": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "source_id",
         "canonical_url",
         "publisher",
+        "publisher_code",
         "document_title",
         "document_type",
         "legal_hierarchy",
         "binding_status",
         "jurisdiction",
         "retrieved_at",
-        "content_sha256"
+        "content_sha256",
+        "content_hash_status"
       ],
       "properties": {
         "source_id": {"$ref": "#/$defs/identifier"},
         "canonical_url": {"type": "string", "pattern": "^https://"},
         "publisher": {"type": "string", "minLength": 1},
+        "publisher_code": {
+          "enum": [
+            "BEIJING_GOVERNMENT",
+            "BEIJING_HRSS",
+            "MOHRSS",
+            "NATIONAL_LAWS_REGULATIONS_DATABASE",
+            "STATE_COUNCIL",
+            "SUPREME_PEOPLES_COURT"
+          ]
+        },
         "document_title": {"type": "string", "minLength": 1},
         "document_type": {"type": "string", "minLength": 1},
         "legal_hierarchy": {"type": "string", "minLength": 1},
         "binding_status": {"type": "string", "minLength": 1},
         "jurisdiction": {"$ref": "#/$defs/jurisdiction"},
         "retrieved_at": {"type": "string", "minLength": 1},
-        "content_sha256": {"$ref": "#/$defs/sha256"}
+        "content_sha256": {"$ref": "#/$defs/sha256"},
+        "content_hash_status": {"const": "DECLARED_UNVERIFIED"}
       }
     },
     "legal_rule": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "rule_id",
         "source_id",
@@ -200,53 +173,135 @@
         "jurisdiction": {"$ref": "#/$defs/jurisdiction"},
         "effective_from": {"type": "string"},
         "effective_to": {"type": ["string", "null"]},
-        "status": {"type": "string"},
-        "applicability_status": {"type": "string"},
-        "verified_at": {"type": "string", "minLength": 1},
-        "verified_by": {"type": "string", "minLength": 1},
-        "verification_actor_type": {"const": "HUMAN"},
+        "status": {"const": "UNVERIFIED_CANDIDATE"},
+        "applicability_status": {"type": ["string", "null"]},
+        "verified_at": {"type": "null"},
+        "verified_by": {"type": "null"},
+        "verification_actor_type": {"type": "null"},
         "supersedes": {"type": "array", "items": {"type": "string"}},
         "superseded_by": {"type": ["string", "null"]}
       }
     },
     "evidence": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["evidence_id", "raw_id", "location", "integrity_status"],
       "properties": {
         "evidence_id": {"$ref": "#/$defs/identifier"},
         "raw_id": {"$ref": "#/$defs/identifier"},
         "location": {
           "type": "object",
+          "additionalProperties": false,
           "required": ["type", "value"],
           "properties": {
             "type": {"type": "string", "minLength": 1},
             "value": {"type": "string", "minLength": 1}
           }
         },
-        "integrity_status": {"const": "INGESTION_INTEGRITY_VERIFIED"}
+        "integrity_status": {"const": "INGESTION_BYTES_OBSERVED"}
       }
     },
     "fact": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["fact_id", "status", "evidence_ids"],
       "properties": {
         "fact_id": {"$ref": "#/$defs/identifier"},
-        "status": {"type": "string"},
-        "evidence_ids": {"type": "array", "items": {"type": "string"}}
+        "status": {
+          "enum": ["USER_ASSERTED", "EVIDENCE_LINKED", "DISPUTED", "UNKNOWN"]
+        },
+        "evidence_ids": {"type": "array", "items": {"type": "string"}},
+        "summary": {"type": "string"}
+      }
+    },
+    "claim_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "element_id",
+        "assertion_status",
+        "proof_status",
+        "burden_stage",
+        "evidence_controller",
+        "initial_burden_status",
+        "production_request",
+        "adverse_consequence_candidate",
+        "fact_ids",
+        "evidence_ids",
+        "rule_ids"
+      ],
+      "properties": {
+        "element_id": {"$ref": "#/$defs/identifier"},
+        "assertion_status": {"enum": ["ASSERTED", "CONDITIONALLY_ASSERTED"]},
+        "proof_status": {
+          "enum": [
+            "EVIDENCE_LINKED_UNVERIFIED",
+            "EMPLOYER_CONTROLLED_MISSING",
+            "MISSING",
+            "DISPUTED"
+          ]
+        },
+        "burden_stage": {
+          "enum": [
+            "APPLICANT_INITIAL",
+            "EMPLOYER_PRODUCTION",
+            "BURDEN_SHIFTED",
+            "TRIBUNAL_ASSESSMENT"
+          ]
+        },
+        "evidence_controller": {
+          "enum": ["APPLICANT", "EMPLOYER", "THIRD_PARTY", "SHARED", "UNKNOWN"]
+        },
+        "initial_burden_status": {"const": "UNVERIFIED"},
+        "production_request": {"type": ["object", "null"]},
+        "adverse_consequence_candidate": {"type": "boolean"},
+        "fact_ids": {"type": "array", "items": {"type": "string"}},
+        "evidence_ids": {"type": "array", "items": {"type": "string"}},
+        "rule_ids": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "limitation_analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accrual_basis",
+        "knowledge_date",
+        "relationship_end_date",
+        "interruption_events",
+        "suspension_intervals",
+        "special_rule",
+        "calculated_deadline",
+        "deadline_status",
+        "evidence_ids",
+        "review_status"
+      ],
+      "properties": {
+        "accrual_basis": {"type": "string"},
+        "knowledge_date": {"type": ["string", "null"]},
+        "relationship_end_date": {"type": ["string", "null"]},
+        "interruption_events": {"type": "array", "items": {"type": "object"}},
+        "suspension_intervals": {"type": "array", "items": {"type": "object"}},
+        "special_rule": {"type": ["string", "null"]},
+        "calculated_deadline": {"type": "null"},
+        "deadline_status": {"const": "UNVERIFIED"},
+        "evidence_ids": {"type": "array", "items": {"type": "string"}},
+        "review_status": {"const": "PENDING_LEGAL_REVIEW"}
       }
     },
     "claim": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["claim_id", "elements", "limitation_analysis", "calculation_ids"],
       "properties": {
         "claim_id": {"$ref": "#/$defs/identifier"},
-        "elements": {"type": "array", "items": {"type": "object"}},
-        "limitation_analysis": {"type": "object"},
+        "elements": {"type": "array", "items": {"$ref": "#/$defs/claim_element"}},
+        "limitation_analysis": {"$ref": "#/$defs/limitation_analysis"},
         "calculation_ids": {"type": "array", "items": {"type": "string"}}
       }
     },
     "calculation": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "calculation_id",
         "calculator_version",
@@ -262,11 +317,12 @@
         "calculation_id": {"$ref": "#/$defs/identifier"},
         "calculator_version": {"const": "1.0.0"},
         "formula_id": {"const": "SUM_DECIMAL_INPUTS_V1"},
-        "status": {"enum": ["EXACT_GIVEN_ASSUMPTIONS", "SCENARIO", "INCOMPLETE"]},
+        "status": {"const": "ARITHMETIC_RECOMPUTED"},
         "inputs": {
           "type": "array",
           "items": {
             "type": "object",
+            "additionalProperties": false,
             "required": ["name", "value", "evidence_id"],
             "properties": {
               "name": {"type": "string", "minLength": 1},
@@ -281,11 +337,22 @@
           "type": "array",
           "items": {"$ref": "#/$defs/decimal_text"}
         },
-        "assumptions": {"type": "array"}
+        "assumptions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conflict_id", "type", "status"],
+      "properties": {
+        "conflict_id": {"$ref": "#/$defs/identifier"},
+        "type": {"type": "string", "minLength": 1},
+        "status": {"const": "PENDING_LEGAL_REVIEW"}
       }
     },
     "statement": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["statement_id", "text", "fact_ids", "rule_ids", "calculation_ids"],
       "properties": {
         "statement_id": {"$ref": "#/$defs/identifier"},
@@ -297,35 +364,13 @@
     },
     "privacy_review": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["status", "reviewed_by", "reviewed_at", "reviewer_actor_type"],
       "properties": {
-        "status": {"const": "COMPLETED"},
-        "reviewed_by": {"type": "string", "minLength": 1},
-        "reviewed_at": {"type": "string", "minLength": 1},
-        "reviewer_actor_type": {"const": "HUMAN"}
-      }
-    },
-    "approval": {
-      "type": "object",
-      "required": [
-        "approval_id",
-        "reviewer_identity",
-        "reviewer_role",
-        "reviewer_actor_type",
-        "approved_snapshot_sha256",
-        "approved_scope",
-        "approved_at_utc",
-        "evidence_uri"
-      ],
-      "properties": {
-        "approval_id": {"$ref": "#/$defs/identifier"},
-        "reviewer_identity": {"type": "string", "minLength": 1},
-        "reviewer_role": {"type": "string", "minLength": 1},
-        "reviewer_actor_type": {"const": "HUMAN"},
-        "approved_snapshot_sha256": {"$ref": "#/$defs/sha256"},
-        "approved_scope": {"type": "string", "minLength": 1},
-        "approved_at_utc": {"type": "string", "minLength": 1},
-        "evidence_uri": {"type": "string", "minLength": 1}
+        "status": {"const": "EXTERNAL_REVIEW_REQUIRED"},
+        "reviewed_by": {"type": "null"},
+        "reviewed_at": {"type": "null"},
+        "reviewer_actor_type": {"type": "null"}
       }
     }
   }

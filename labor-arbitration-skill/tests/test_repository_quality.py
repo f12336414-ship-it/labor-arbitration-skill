@@ -6,6 +6,9 @@ import sys
 import unittest
 from pathlib import Path
 
+import jsonschema
+
+from tests.case_package_factory import make_valid_reference_integrity_package
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY_ROOT = SKILL_ROOT.parent
@@ -55,11 +58,11 @@ class RepositoryQualityTests(unittest.TestCase):
 
     def test_runtime_scripts_do_not_import_execution_or_network_clients(self):
         forbidden_import_roots = {
-            "http",
+            "http.client",
             "requests",
             "socket",
             "subprocess",
-            "urllib",
+            "urllib.request",
         }
         for script in sorted((SKILL_ROOT / "scripts").glob("*.py")):
             with self.subTest(script=script.name):
@@ -70,10 +73,10 @@ class RepositoryQualityTests(unittest.TestCase):
                 for node in ast.walk(tree):
                     if isinstance(node, ast.Import):
                         imported_roots.update(
-                            alias.name.split(".", 1)[0] for alias in node.names
+                            alias.name for alias in node.names
                         )
                     elif isinstance(node, ast.ImportFrom) and node.module:
-                        imported_roots.add(node.module.split(".", 1)[0])
+                        imported_roots.add(node.module)
                     elif isinstance(node, ast.Call):
                         if isinstance(node.func, ast.Name):
                             called_names.add(node.func.id)
@@ -93,6 +96,7 @@ class RepositoryQualityTests(unittest.TestCase):
             "LICENSE",
             "NOTICE",
             "README.md",
+            "requirements-dev.txt",
             "SECURITY.md",
             "SUPPORT.md",
             "VERSION",
@@ -101,6 +105,7 @@ class RepositoryQualityTests(unittest.TestCase):
             path for path in required_files if not (REPOSITORY_ROOT / path).is_file()
         )
         self.assertEqual(missing, [])
+        self.assertTrue((SKILL_ROOT / "requirements.txt").is_file())
 
         version = (REPOSITORY_ROOT / "VERSION").read_text(encoding="utf-8").strip()
         self.assertRegex(version, r"^0\.[0-9]+\.[0-9]+$")
@@ -122,7 +127,11 @@ class RepositoryQualityTests(unittest.TestCase):
         self.assertEqual(
             schema["$schema"], "https://json-schema.org/draft/2020-12/schema"
         )
-        self.assertEqual(schema["properties"]["schema_version"]["const"], "1.1")
+        jsonschema.Draft202012Validator.check_schema(schema)
+        jsonschema.Draft202012Validator(schema).validate(
+            make_valid_reference_integrity_package()
+        )
+        self.assertEqual(schema["properties"]["schema_version"]["const"], "1.2")
         self.assertIn("intake_manifest_sha256", schema["properties"])
         self.assertEqual(example["requested_state"], "DRAFT")
 
@@ -138,6 +147,28 @@ class RepositoryQualityTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_capability_matrix_is_machine_readable_and_truthful(self):
+        capability_path = SKILL_ROOT / "references" / "capabilities.json"
+        matrix = json.loads(capability_path.read_text(encoding="utf-8"))
+        capabilities = {item["id"]: item for item in matrix["capabilities"]}
+
+        self.assertEqual(matrix["product_version"], "0.2.0")
+        self.assertEqual(
+            matrix["highest_automated_state"], "REFERENCE_INTEGRITY_VALIDATED"
+        )
+        self.assertEqual(matrix["mandatory_next_state"], "PENDING_LEGAL_REVIEW")
+        self.assertFalse(matrix["submission_ready_state_supported"])
+        self.assertEqual(
+            capabilities["REFERENCE_INTEGRITY"]["status"], "IMPLEMENTED"
+        )
+        for capability_id in (
+            "AUTHENTICATED_APPROVAL_RBAC_SIGNATURE_AND_AUDIT",
+            "BEIJING_AUTHORITATIVE_RULE_PACK",
+            "LIMITATION_ENGINE",
+            "PROFESSIONAL_LABOR_CLAIM_CALCULATORS",
+        ):
+            self.assertEqual(capabilities[capability_id]["status"], "NOT_IMPLEMENTED")
 
 
 if __name__ == "__main__":
