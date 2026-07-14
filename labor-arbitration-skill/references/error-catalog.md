@@ -13,5 +13,8 @@
 | `DATE_FORMAT_INVALID` / `DATE_INTERVAL_INVALID` | 格式、真实日历日期或区间顺序无效 | 使用 ISO 日期或 UTC RFC 3339；只修数据，不推断法律期限 |
 | `*_SNAPSHOT_MISMATCH` / `STATE_REQUEST_MISMATCH` | 内容、依赖、statements 或请求状态变更 | 按 migration 文档的顺序重算，不复用旧报告 |
 | `SCHEMA_*` / `*_FIELD_MISSING` | 结构不符合发布契约 | 对照两个 v1.3 Schema 修正；不要降级到旧 Schema |
+| `REVIEW_PACKET_SCHEMA_*` / `REVIEW_PACKET_REFERENCE_*` | 三类审查包结构或包内引用不符合 v1.0 契约 | 对照审查包 Schema 修正，不增加批准字段，不删除固定限制 |
+| `REVIEW_SUBJECT_SNAPSHOT_MISMATCH` / `REVIEW_SUBJECT_BINDING_MISMATCH` | 审核对象已变化或审核意见没有绑定当前对象 | 重算对象摘要并重新交叉验证；旧意见不得迁移到新对象 |
+| `REVIEW_PACKET_STATUS_INVALID` / `REVIEW_DECISION_INCONSISTENT` | 状态、总意见与逐题意见不一致 | 按状态前置条件修正；全体同意也只能进入独立法律复核 |
 
 未知错误仍应 fail-closed。若错误提示与实际输入不一致，请提交不含真实案件或个人信息的最小合成复现。

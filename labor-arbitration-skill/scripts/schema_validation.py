@@ -13,6 +13,7 @@ from finding_model import finding, format_schema_path
 REFERENCE_DIRECTORY = Path(__file__).resolve().parents[1] / "references"
 CASE_PACKAGE_SCHEMA_PATH = REFERENCE_DIRECTORY / "case-package.schema.json"
 INTAKE_MANIFEST_SCHEMA_PATH = REFERENCE_DIRECTORY / "intake-manifest.schema.json"
+REVIEW_PACKET_SCHEMA_PATH = REFERENCE_DIRECTORY / "review-packet.schema.json"
 
 
 def _load_validator(path: Path):
@@ -62,6 +63,27 @@ def validate_published_intake_schema(manifest: dict) -> list[dict]:
         code="INTAKE_SCHEMA_VALIDATION_ERROR",
         prefix="intake_manifest",
         message="Intake manifest does not conform to the published v1.3 JSON Schema.",
+    )
+
+
+def validate_published_review_packet(packet: dict) -> list[dict]:
+    try:
+        validator = _load_validator(REVIEW_PACKET_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [
+            finding(
+                "REVIEW_PACKET_SCHEMA_UNAVAILABLE",
+                "$",
+                "The bundled review-packet v1.0 JSON Schema is unavailable or invalid.",
+                "P0",
+            )
+        ]
+    return _collect_errors(
+        validator,
+        packet,
+        code="REVIEW_PACKET_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Review packet does not conform to the published v1.0 JSON Schema.",
     )
 
 

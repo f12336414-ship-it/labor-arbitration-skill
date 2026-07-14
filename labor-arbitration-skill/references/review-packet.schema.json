@@ -1,0 +1,559 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/review-packet.schema.json",
+  "title": "Labor arbitration structured cross-validation review packet",
+  "description": "Version 1.0 contract for rule, claim, and calculator cross-validation packets. Schema or validator success proves only structure, references, snapshots, and review-record shape; it does not prove legal correctness, reviewer identity, professional approval, or submission readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "packet_id",
+    "packet_type",
+    "packet_status",
+    "jurisdiction",
+    "generated_at",
+    "snapshot_canonicalization",
+    "review_subject_sha256",
+    "packet_snapshot_sha256",
+    "source_artifacts",
+    "subject",
+    "review_questions",
+    "cross_validation",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "packet_id": {
+      "type": "string",
+      "pattern": "^REVIEW-(RULE|CLAIM|CALC)-[A-Z0-9][A-Z0-9_-]{0,47}$"
+    },
+    "packet_type": {
+      "enum": ["RULE_REVIEW", "CLAIM_REVIEW", "CALCULATOR_REVIEW"]
+    },
+    "packet_status": {
+      "enum": [
+        "DRAFT_FOR_CROSS_VALIDATION",
+        "CROSS_VALIDATION_RECORDED",
+        "REVISION_REQUIRED",
+        "PENDING_INDEPENDENT_LEGAL_REVIEW"
+      ]
+    },
+    "jurisdiction": {"$ref": "#/$defs/jurisdiction"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "snapshot_canonicalization": {"const": "RFC8785"},
+    "review_subject_sha256": {"$ref": "#/$defs/sha256"},
+    "packet_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+    "source_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {"$ref": "#/$defs/source_artifact"}
+    },
+    "subject": {"type": "object"},
+    "review_questions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {"$ref": "#/$defs/review_question"}
+    },
+    "cross_validation": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {"$ref": "#/$defs/cross_validation_record"}
+    },
+    "limitations": {
+      "const": [
+        "NO_LEGAL_CORRECTNESS_VERIFIED",
+        "NO_REVIEWER_IDENTITY_AUTHENTICATED",
+        "NO_SUBMISSION_APPROVAL_GRANTED"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"packet_type": {"const": "RULE_REVIEW"}}},
+      "then": {"properties": {"subject": {"$ref": "#/$defs/rule_subject"}}}
+    },
+    {
+      "if": {"properties": {"packet_type": {"const": "CLAIM_REVIEW"}}},
+      "then": {"properties": {"subject": {"$ref": "#/$defs/claim_subject"}}}
+    },
+    {
+      "if": {"properties": {"packet_type": {"const": "CALCULATOR_REVIEW"}}},
+      "then": {"properties": {"subject": {"$ref": "#/$defs/calculator_subject"}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[A-Z][A-Z0-9_-]+$"
+    },
+    "short_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "long_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000
+    },
+    "jurisdiction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["country", "province"],
+      "properties": {
+        "country": {"const": "CN"},
+        "province": {"const": "Beijing"}
+      }
+    },
+    "identifier_array": {
+      "type": "array",
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/identifier"}
+    },
+    "text_array": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {"$ref": "#/$defs/short_text"}
+    },
+    "source_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "canonical_url",
+        "publisher",
+        "publisher_code",
+        "document_title",
+        "document_number",
+        "document_type",
+        "legal_hierarchy",
+        "binding_status",
+        "jurisdiction",
+        "retrieved_at",
+        "content_sha256",
+        "content_hash_status"
+      ],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/identifier"},
+        "canonical_url": {"type": "string", "pattern": "^https://", "maxLength": 2048},
+        "publisher": {"$ref": "#/$defs/short_text"},
+        "publisher_code": {
+          "enum": [
+            "BEIJING_GOVERNMENT",
+            "BEIJING_HRSS",
+            "MOHRSS",
+            "NATIONAL_LAWS_REGULATIONS_DATABASE",
+            "STATE_COUNCIL",
+            "SUPREME_PEOPLES_COURT"
+          ]
+        },
+        "document_title": {"$ref": "#/$defs/short_text"},
+        "document_number": {
+          "oneOf": [
+            {"$ref": "#/$defs/short_text"},
+            {"type": "null"}
+          ]
+        },
+        "document_type": {
+          "enum": [
+            "CONSTITUTION",
+            "LAW",
+            "ADMINISTRATIVE_REGULATION",
+            "JUDICIAL_INTERPRETATION",
+            "LOCAL_REGULATION",
+            "DEPARTMENT_RULE",
+            "LOCAL_GOVERNMENT_RULE",
+            "OFFICIAL_NORMATIVE_DOCUMENT"
+          ]
+        },
+        "legal_hierarchy": {"$ref": "#/$defs/short_text"},
+        "binding_status": {"enum": ["BINDING", "GENERALLY_APPLICABLE"]},
+        "jurisdiction": {"$ref": "#/$defs/jurisdiction"},
+        "retrieved_at": {"type": "string", "format": "date-time"},
+        "content_sha256": {"$ref": "#/$defs/sha256"},
+        "content_hash_status": {"const": "DECLARED_UNVERIFIED"}
+      }
+    },
+    "provision_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "locator", "exact_text_candidate"],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/identifier"},
+        "locator": {"$ref": "#/$defs/short_text"},
+        "exact_text_candidate": {"$ref": "#/$defs/long_text"}
+      }
+    },
+    "rule_subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "title",
+        "status",
+        "source_ids",
+        "provision_references",
+        "candidate_proposition",
+        "conditions",
+        "exceptions",
+        "effective_from",
+        "effective_to",
+        "affected_claim_ids",
+        "affected_calculator_ids",
+        "disputed_points"
+      ],
+      "properties": {
+        "rule_id": {"$ref": "#/$defs/identifier"},
+        "title": {"$ref": "#/$defs/short_text"},
+        "status": {"const": "UNVERIFIED_CANDIDATE"},
+        "source_ids": {
+          "allOf": [
+            {"$ref": "#/$defs/identifier_array"},
+            {"minItems": 1}
+          ]
+        },
+        "provision_references": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {"$ref": "#/$defs/provision_reference"}
+        },
+        "candidate_proposition": {"$ref": "#/$defs/long_text"},
+        "conditions": {"$ref": "#/$defs/text_array"},
+        "exceptions": {"$ref": "#/$defs/text_array"},
+        "effective_from": {"type": "string", "format": "date"},
+        "effective_to": {
+          "oneOf": [
+            {"type": "string", "format": "date"},
+            {"type": "null"}
+          ]
+        },
+        "affected_claim_ids": {"$ref": "#/$defs/identifier_array"},
+        "affected_calculator_ids": {"$ref": "#/$defs/identifier_array"},
+        "disputed_points": {"$ref": "#/$defs/text_array"}
+      }
+    },
+    "claim_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "element_id",
+        "description",
+        "burden_stage_candidate",
+        "required_evidence_types",
+        "rule_ids"
+      ],
+      "properties": {
+        "element_id": {"$ref": "#/$defs/identifier"},
+        "description": {"$ref": "#/$defs/short_text"},
+        "burden_stage_candidate": {
+          "enum": [
+            "APPLICANT_INITIAL",
+            "EMPLOYER_PRODUCTION",
+            "BURDEN_SHIFTED",
+            "TRIBUNAL_ASSESSMENT"
+          ]
+        },
+        "required_evidence_types": {"$ref": "#/$defs/text_array"},
+        "rule_ids": {"$ref": "#/$defs/identifier_array"}
+      }
+    },
+    "limitation_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "start_event_candidates",
+        "interruption_event_candidates",
+        "suspension_event_candidates",
+        "special_rule_question",
+        "rule_ids",
+        "calculated_deadline"
+      ],
+      "properties": {
+        "status": {"const": "UNVERIFIED"},
+        "start_event_candidates": {"$ref": "#/$defs/text_array"},
+        "interruption_event_candidates": {"$ref": "#/$defs/text_array"},
+        "suspension_event_candidates": {"$ref": "#/$defs/text_array"},
+        "special_rule_question": {"$ref": "#/$defs/short_text"},
+        "rule_ids": {"$ref": "#/$defs/identifier_array"},
+        "calculated_deadline": {"type": "null"}
+      }
+    },
+    "claim_subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "name",
+        "status",
+        "remedy_channel_candidate",
+        "rule_ids",
+        "rule_dependencies",
+        "elements",
+        "exceptions",
+        "limitation_candidate",
+        "compatible_claim_ids",
+        "mutually_exclusive_claim_ids",
+        "common_defenses",
+        "calculator_ids"
+      ],
+      "properties": {
+        "claim_id": {"$ref": "#/$defs/identifier"},
+        "name": {"$ref": "#/$defs/short_text"},
+        "status": {"const": "UNVERIFIED_CANDIDATE"},
+        "remedy_channel_candidate": {
+          "enum": [
+            "LABOR_ARBITRATION",
+            "LABOR_INSPECTION",
+            "SOCIAL_INSURANCE_ADMINISTRATION",
+            "HOUSING_FUND_ADMINISTRATION",
+            "WORK_INJURY_ADMINISTRATION",
+            "PEOPLES_COURT",
+            "TAX_AUTHORITY",
+            "PUBLIC_SECURITY",
+            "UNRESOLVED"
+          ]
+        },
+        "rule_ids": {
+          "allOf": [
+            {"$ref": "#/$defs/identifier_array"},
+            {"minItems": 1}
+          ]
+        },
+        "rule_dependencies": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {"$ref": "#/$defs/rule_dependency"}
+        },
+        "elements": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {"$ref": "#/$defs/claim_element"}
+        },
+        "exceptions": {"$ref": "#/$defs/text_array"},
+        "limitation_candidate": {"$ref": "#/$defs/limitation_candidate"},
+        "compatible_claim_ids": {"$ref": "#/$defs/identifier_array"},
+        "mutually_exclusive_claim_ids": {"$ref": "#/$defs/identifier_array"},
+        "common_defenses": {"$ref": "#/$defs/text_array"},
+        "calculator_ids": {"$ref": "#/$defs/identifier_array"}
+      }
+    },
+    "calculator_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_id",
+        "label",
+        "data_type",
+        "unit",
+        "evidence_required",
+        "rule_ids"
+      ],
+      "properties": {
+        "input_id": {"$ref": "#/$defs/identifier"},
+        "label": {"$ref": "#/$defs/short_text"},
+        "data_type": {"enum": ["DECIMAL", "INTEGER", "DATE", "BOOLEAN", "ENUM"]},
+        "unit": {"$ref": "#/$defs/short_text"},
+        "evidence_required": {"type": "boolean"},
+        "rule_ids": {"$ref": "#/$defs/identifier_array"}
+      }
+    },
+    "rule_dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "review_packet_id",
+        "review_subject_sha256",
+        "packet_snapshot_sha256",
+        "binding_status"
+      ],
+      "properties": {
+        "rule_id": {"$ref": "#/$defs/identifier"},
+        "review_packet_id": {
+          "type": "string",
+          "pattern": "^REVIEW-RULE-[A-Z0-9][A-Z0-9_-]{0,47}$"
+        },
+        "review_subject_sha256": {"$ref": "#/$defs/sha256"},
+        "packet_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+        "binding_status": {"const": "DECLARED_UNVERIFIED"}
+      }
+    },
+    "dynamic_parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parameter_id", "label", "value_status", "rule_ids"],
+      "properties": {
+        "parameter_id": {"$ref": "#/$defs/identifier"},
+        "label": {"$ref": "#/$defs/short_text"},
+        "value_status": {"const": "UNSET_PENDING_REVIEW"},
+        "rule_ids": {"$ref": "#/$defs/identifier_array"}
+      }
+    },
+    "calculator_test_vector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vector_id",
+        "inputs",
+        "expected_result_candidate",
+        "review_status"
+      ],
+      "properties": {
+        "vector_id": {"$ref": "#/$defs/identifier"},
+        "inputs": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 100,
+          "additionalProperties": {
+            "type": ["string", "integer", "boolean"]
+          }
+        },
+        "expected_result_candidate": {"type": "string", "maxLength": 1000},
+        "review_status": {"const": "UNVERIFIED"}
+      }
+    },
+    "calculator_subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "calculator_id",
+        "name",
+        "formula_id",
+        "calculator_version",
+        "status",
+        "result_status",
+        "rule_ids",
+        "rule_dependencies",
+        "inputs",
+        "formula_expression_candidate",
+        "rounding_policy_candidate",
+        "intermediate_step_descriptions",
+        "dynamic_parameters",
+        "conflict_checks",
+        "test_vectors"
+      ],
+      "properties": {
+        "calculator_id": {"$ref": "#/$defs/identifier"},
+        "name": {"$ref": "#/$defs/short_text"},
+        "formula_id": {"$ref": "#/$defs/identifier"},
+        "calculator_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "status": {"const": "FORMULA_CANDIDATE_UNVERIFIED"},
+        "result_status": {"const": "NO_LEGAL_AMOUNT_PRODUCED"},
+        "rule_ids": {
+          "allOf": [
+            {"$ref": "#/$defs/identifier_array"},
+            {"minItems": 1}
+          ]
+        },
+        "rule_dependencies": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {"$ref": "#/$defs/rule_dependency"}
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {"$ref": "#/$defs/calculator_input"}
+        },
+        "formula_expression_candidate": {"$ref": "#/$defs/long_text"},
+        "rounding_policy_candidate": {"$ref": "#/$defs/short_text"},
+        "intermediate_step_descriptions": {"$ref": "#/$defs/text_array"},
+        "dynamic_parameters": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {"$ref": "#/$defs/dynamic_parameter"}
+        },
+        "conflict_checks": {"$ref": "#/$defs/text_array"},
+        "test_vectors": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {"$ref": "#/$defs/calculator_test_vector"}
+        }
+      }
+    },
+    "review_question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question_id", "prompt", "blocking", "subject_paths"],
+      "properties": {
+        "question_id": {"$ref": "#/$defs/identifier"},
+        "prompt": {"$ref": "#/$defs/short_text"},
+        "blocking": {"type": "boolean"},
+        "subject_paths": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^\\$\\.subject(?:\\.[A-Za-z_][A-Za-z0-9_]*|\\[[0-9]+\\])*$",
+            "maxLength": 512
+          }
+        }
+      }
+    },
+    "question_response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question_id", "decision", "basis_source_ids", "comment"],
+      "properties": {
+        "question_id": {"$ref": "#/$defs/identifier"},
+        "decision": {"enum": ["AGREE", "DISAGREE", "NEEDS_MORE_EVIDENCE"]},
+        "basis_source_ids": {"$ref": "#/$defs/identifier_array"},
+        "comment": {"$ref": "#/$defs/short_text"}
+      }
+    },
+    "cross_validation_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_id",
+        "review_subject_sha256",
+        "reviewer_reference",
+        "reviewer_role",
+        "authentication_status",
+        "recorded_at",
+        "decision",
+        "question_responses",
+        "basis_notes",
+        "legal_approval_effect"
+      ],
+      "properties": {
+        "review_id": {"$ref": "#/$defs/identifier"},
+        "review_subject_sha256": {"$ref": "#/$defs/sha256"},
+        "reviewer_reference": {"$ref": "#/$defs/identifier"},
+        "reviewer_role": {"const": "PROJECT_CROSS_VALIDATOR"},
+        "authentication_status": {"const": "UNAUTHENTICATED_SELF_DECLARATION"},
+        "recorded_at": {"type": "string", "format": "date-time"},
+        "decision": {"enum": ["AGREE", "DISAGREE", "NEEDS_MORE_EVIDENCE"]},
+        "question_responses": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {"$ref": "#/$defs/question_response"}
+        },
+        "basis_notes": {"$ref": "#/$defs/long_text"},
+        "legal_approval_effect": {"const": "NONE"}
+      }
+    }
+  }
+}

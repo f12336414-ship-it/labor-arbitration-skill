@@ -1,4 +1,4 @@
 interface:
   display_name: "劳动仲裁引用完整性内核"
-  short_description: "把本地材料整理为可复查的技术交接包，并暴露所有未核验缺口"
-  default_prompt: "Use $labor-arbitration-skill to create or validate a reproducible technical handoff package, expose every unverified legal property, and stop at pending external legal review."
+  short_description: "校验本地案件引用和规则、请求权、计算器的交叉验证审查包"
+  default_prompt: "Use $labor-arbitration-skill to validate a local reference-integrity package or a rule, claim, or calculator cross-validation packet without claiming legal approval."

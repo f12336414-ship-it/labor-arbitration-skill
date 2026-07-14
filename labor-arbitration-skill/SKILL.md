@@ -1,6 +1,6 @@
 ---
 name: labor-arbitration-skill
-description: Build and validate local Chinese labor-arbitration reference-integrity packages without claiming legal correctness. Use for bounded file manifests, fact/evidence/rule ID graphs, canonical snapshots, generic decimal recomputation, or deciding that a package must remain pending external legal review.
+description: Build and validate local Chinese labor-arbitration reference-integrity packages and structured rule, claim, or calculator cross-validation packets without claiming legal correctness. Use for bounded file manifests, fact/evidence/rule ID graphs, canonical snapshots, generic decimal recomputation, review-record binding, or deciding that work must remain pending independent legal review.
 ---
 
 # Labor Arbitration Reference-Integrity Core
@@ -13,7 +13,7 @@ The longer-term product goal is to help workers and their authorized assistants 
 
 Use this Skill as a local technical integrity workspace. It is not a lawyer, evidence authenticator, Beijing rule pack, limitation engine, professional claim calculator, approval system, or filing tool.
 
-Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). They are authoritative for implemented and unavailable behavior.
+Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). For rule, claim, or calculator review, also read [references/review-packet-contract.md](references/review-packet-contract.md). They are authoritative for implemented and unavailable behavior.
 
 For any non-zero result, follow [references/error-catalog.md](references/error-catalog.md); never edit the report or suppress a finding.
 
@@ -82,7 +82,19 @@ Even on exit `0`, read:
 - `legal_review_required`, which remains `true`;
 - `next_required_state`, which remains `PENDING_LEGAL_REVIEW`.
 
-### 5. Stop at the trust boundary
+### 5. Validate a cross-validation review packet
+
+For a proposed rule, claim, or calculator contract, start from the published synthetic examples and keep every proposition explicitly unverified. Run:
+
+```powershell
+python scripts/validate_review_packet.py <review-packet.json>
+```
+
+Treat every non-zero exit as a hard block. Exit `0` verifies only the published structure, candidate-source policy, internal references, status consistency, and RFC 8785 review bindings. It never verifies legal correctness, source contents, reviewer identity, professional approval, or submission readiness.
+
+When the review subject, sources, or questions change, generate a new subject snapshot and obtain new cross-validation responses. Never carry an old response onto a changed subject.
+
+### 6. Stop at the trust boundary
 
 Do not generate or label a filing-ready artifact. Hand the locked package, manifest, report, source candidates, open legal questions, and data-handling risks to an independently authenticated legal-review workflow outside this project.
 
