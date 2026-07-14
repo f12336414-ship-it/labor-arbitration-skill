@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "packet_id": "REVIEW-RULE-SYNTHETIC-WAGE",
+  "packet_type": "RULE_REVIEW",
+  "packet_status": "DRAFT_FOR_CROSS_VALIDATION",
+  "jurisdiction": {
+    "country": "CN",
+    "province": "Beijing"
+  },
+  "generated_at": "2026-07-15T00:00:00Z",
+  "snapshot_canonicalization": "RFC8785",
+  "review_subject_sha256": "695e92736045194ced4f2e7104694ac06b48eb264155e711d5ba1ac3e8fc6466",
+  "packet_snapshot_sha256": "97da7a638ce11b2980ecee2944bc89c45da105e2049453091f21b4997cad9e72",
+  "source_artifacts": [
+    {
+      "source_id": "SRC-SYNTHETIC-LAW",
+      "canonical_url": "https://flk.npc.gov.cn/detail?id=synthetic-review-fixture",
+      "publisher": "Synthetic official-source fixture",
+      "publisher_code": "NATIONAL_LAWS_REGULATIONS_DATABASE",
+      "document_title": "Synthetic wage rule for contract tests",
+      "document_number": "SYNTHETIC-2026-001",
+      "document_type": "LAW",
+      "legal_hierarchy": "LAW",
+      "binding_status": "BINDING",
+      "jurisdiction": {
+        "country": "CN",
+        "province": "Beijing"
+      },
+      "retrieved_at": "2026-07-15T00:00:00Z",
+      "content_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "content_hash_status": "DECLARED_UNVERIFIED"
+    }
+  ],
+  "subject": {
+    "rule_id": "RULE-SYNTHETIC-WAGE",
+    "title": "Synthetic wage payment candidate",
+    "status": "UNVERIFIED_CANDIDATE",
+    "source_ids": [
+      "SRC-SYNTHETIC-LAW"
+    ],
+    "provision_references": [
+      {
+        "source_id": "SRC-SYNTHETIC-LAW",
+        "locator": "Synthetic article 1",
+        "exact_text_candidate": "Synthetic fixture only: an employer pays the confirmed synthetic wage amount on the agreed synthetic date."
+      }
+    ],
+    "candidate_proposition": "Synthetic fixture only: a confirmed unpaid wage difference may require a deterministic difference calculation after legal review.",
+    "conditions": [
+      "The wage obligation and payment record have been confirmed from synthetic evidence."
+    ],
+    "exceptions": [
+      "The source or effective period remains unverified."
+    ],
+    "effective_from": "2026-01-01",
+    "effective_to": null,
+    "affected_claim_ids": [
+      "CLAIM-SYNTHETIC-WAGE"
+    ],
+    "affected_calculator_ids": [
+      "CALC-SYNTHETIC-WAGE"
+    ],
+    "disputed_points": [
+      "Whether the candidate proposition accurately reflects the cited synthetic text."
+    ]
+  },
+  "review_questions": [
+    {
+      "question_id": "Q-RULE-SOURCE",
+      "prompt": "Does the candidate proposition match the declared source text and locator?",
+      "blocking": true,
+      "subject_paths": [
+        "$.subject.candidate_proposition",
+        "$.subject.provision_references"
+      ]
+    },
+    {
+      "question_id": "Q-RULE-EFFECTIVE",
+      "prompt": "Are the candidate effective dates and declared jurisdiction supported?",
+      "blocking": true,
+      "subject_paths": [
+        "$.subject.effective_from",
+        "$.subject.effective_to"
+      ]
+    }
+  ],
+  "cross_validation": [],
+  "limitations": [
+    "NO_LEGAL_CORRECTNESS_VERIFIED",
+    "NO_REVIEWER_IDENTITY_AUTHENTICATED",
+    "NO_SUBMISSION_APPROVAL_GRANTED"
+  ]
+}

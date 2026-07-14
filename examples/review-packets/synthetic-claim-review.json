@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "packet_id": "REVIEW-CLAIM-SYNTHETIC-WAGE",
+  "packet_type": "CLAIM_REVIEW",
+  "packet_status": "DRAFT_FOR_CROSS_VALIDATION",
+  "jurisdiction": {
+    "country": "CN",
+    "province": "Beijing"
+  },
+  "generated_at": "2026-07-15T00:00:00Z",
+  "snapshot_canonicalization": "RFC8785",
+  "review_subject_sha256": "ad379edf9519f4be4abed61db708bea92342645f7afc975fe5be9f5bf758e50f",
+  "packet_snapshot_sha256": "725125770fd1d191735b094909321d512a8e87ca9fc9ff09974dc8f56131e15b",
+  "source_artifacts": [
+    {
+      "source_id": "SRC-SYNTHETIC-LAW",
+      "canonical_url": "https://flk.npc.gov.cn/detail?id=synthetic-review-fixture",
+      "publisher": "Synthetic official-source fixture",
+      "publisher_code": "NATIONAL_LAWS_REGULATIONS_DATABASE",
+      "document_title": "Synthetic wage rule for contract tests",
+      "document_number": "SYNTHETIC-2026-001",
+      "document_type": "LAW",
+      "legal_hierarchy": "LAW",
+      "binding_status": "BINDING",
+      "jurisdiction": {
+        "country": "CN",
+        "province": "Beijing"
+      },
+      "retrieved_at": "2026-07-15T00:00:00Z",
+      "content_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "content_hash_status": "DECLARED_UNVERIFIED"
+    }
+  ],
+  "subject": {
+    "claim_id": "CLAIM-SYNTHETIC-WAGE",
+    "name": "Synthetic unpaid wage difference claim",
+    "status": "UNVERIFIED_CANDIDATE",
+    "remedy_channel_candidate": "LABOR_ARBITRATION",
+    "rule_ids": [
+      "RULE-SYNTHETIC-WAGE"
+    ],
+    "rule_dependencies": [
+      {
+        "rule_id": "RULE-SYNTHETIC-WAGE",
+        "review_packet_id": "REVIEW-RULE-SYNTHETIC-WAGE",
+        "review_subject_sha256": "695e92736045194ced4f2e7104694ac06b48eb264155e711d5ba1ac3e8fc6466",
+        "packet_snapshot_sha256": "97da7a638ce11b2980ecee2944bc89c45da105e2049453091f21b4997cad9e72",
+        "binding_status": "DECLARED_UNVERIFIED"
+      }
+    ],
+    "elements": [
+      {
+        "element_id": "ELEMENT-WAGE-OBLIGATION",
+        "description": "A synthetic wage obligation exists for the declared period.",
+        "burden_stage_candidate": "APPLICANT_INITIAL",
+        "required_evidence_types": [
+          "Synthetic contract or wage record"
+        ],
+        "rule_ids": [
+          "RULE-SYNTHETIC-WAGE"
+        ]
+      },
+      {
+        "element_id": "ELEMENT-WAGE-UNPAID",
+        "description": "The employer payment record does not cover the confirmed obligation.",
+        "burden_stage_candidate": "EMPLOYER_PRODUCTION",
+        "required_evidence_types": [
+          "Synthetic bank record and employer payroll record"
+        ],
+        "rule_ids": [
+          "RULE-SYNTHETIC-WAGE"
+        ]
+      }
+    ],
+    "exceptions": [
+      "The candidate remedy channel and burden allocation remain unverified."
+    ],
+    "limitation_candidate": {
+      "status": "UNVERIFIED",
+      "start_event_candidates": [
+        "Synthetic wage due date"
+      ],
+      "interruption_event_candidates": [
+        "Synthetic written demand"
+      ],
+      "suspension_event_candidates": [],
+      "special_rule_question": "Does a special wage-remuneration limitation rule apply to this synthetic claim?",
+      "rule_ids": [
+        "RULE-SYNTHETIC-WAGE"
+      ],
+      "calculated_deadline": null
+    },
+    "compatible_claim_ids": [],
+    "mutually_exclusive_claim_ids": [],
+    "common_defenses": [
+      "The synthetic wage was already paid.",
+      "The asserted amount uses an unsupported wage basis."
+    ],
+    "calculator_ids": [
+      "CALC-SYNTHETIC-WAGE"
+    ]
+  },
+  "review_questions": [
+    {
+      "question_id": "Q-CLAIM-ELEMENTS",
+      "prompt": "Are all candidate elements, exceptions, and burden stages supported by the declared source?",
+      "blocking": true,
+      "subject_paths": [
+        "$.subject.elements",
+        "$.subject.exceptions"
+      ]
+    },
+    {
+      "question_id": "Q-CLAIM-LIMITATION",
+      "prompt": "Are the limitation event categories complete without calculating a deadline?",
+      "blocking": true,
+      "subject_paths": [
+        "$.subject.limitation_candidate"
+      ]
+    }
+  ],
+  "cross_validation": [],
+  "limitations": [
+    "NO_LEGAL_CORRECTNESS_VERIFIED",
+    "NO_REVIEWER_IDENTITY_AUTHENTICATED",
+    "NO_SUBMISSION_APPROVAL_GRANTED"
+  ]
+}

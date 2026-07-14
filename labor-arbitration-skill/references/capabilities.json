@@ -57,6 +57,12 @@
       "does_not_guarantee": "URL availability, redirect safety, publisher authorship, page contents, hash provenance, currentness, amendment history, exact quotation, or case applicability."
     },
     {
+      "id": "STRUCTURED_CROSS_VALIDATION_REVIEW_PACKETS",
+      "status": "IMPLEMENTED",
+      "guarantee": "Validates versioned rule, claim, and calculator review-packet structures, official-source candidate references, declared version-bound rule dependencies, review-question subject paths, RFC 8785 subject and packet snapshots, and self-declared cross-validation record consistency.",
+      "does_not_guarantee": "Existence or contents of external rule packets, source content or currentness, legal correctness, reviewer identity or qualification, professional approval, or submission readiness."
+    },
+    {
       "id": "EVIDENCE_LOCATION_METADATA",
       "status": "PARTIAL",
       "guarantee": "Requires a typed, non-empty location and a reference to an observed raw file.",

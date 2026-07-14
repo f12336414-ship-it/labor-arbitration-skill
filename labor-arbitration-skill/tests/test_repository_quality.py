@@ -41,6 +41,7 @@ class RepositoryQualityTests(unittest.TestCase):
         for script_name in (
             "build_intake_manifest.py",
             "validate_case_package.py",
+            "validate_review_packet.py",
         ):
             self.assertTrue((SKILL_ROOT / "scripts" / script_name).is_file())
 
@@ -255,9 +256,11 @@ class RepositoryQualityTests(unittest.TestCase):
     def test_published_schema_and_synthetic_example_are_machine_readable(self):
         schema_path = SKILL_ROOT / "references" / "case-package.schema.json"
         intake_schema_path = SKILL_ROOT / "references" / "intake-manifest.schema.json"
+        review_schema_path = SKILL_ROOT / "references" / "review-packet.schema.json"
         example_path = REPOSITORY_ROOT / "examples" / "synthetic-draft.json"
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         intake_schema = json.loads(intake_schema_path.read_text(encoding="utf-8"))
+        review_schema = json.loads(review_schema_path.read_text(encoding="utf-8"))
         example = json.loads(example_path.read_text(encoding="utf-8"))
 
         self.assertEqual(
@@ -265,9 +268,20 @@ class RepositoryQualityTests(unittest.TestCase):
         )
         jsonschema.Draft202012Validator.check_schema(schema)
         jsonschema.Draft202012Validator.check_schema(intake_schema)
+        jsonschema.Draft202012Validator.check_schema(review_schema)
         jsonschema.Draft202012Validator(schema).validate(
             make_valid_reference_integrity_package()
         )
+        for review_example_path in sorted(
+            (REPOSITORY_ROOT / "examples" / "review-packets").glob("*.json")
+        ):
+            with self.subTest(review_example=review_example_path.name):
+                review_example = json.loads(
+                    review_example_path.read_text(encoding="utf-8")
+                )
+                jsonschema.Draft202012Validator(review_schema).validate(
+                    review_example
+                )
         self.assertEqual(schema["properties"]["schema_version"]["const"], "1.3")
         self.assertIn("intake_manifest_sha256", schema["properties"])
         self.assertEqual(
@@ -301,6 +315,10 @@ class RepositoryQualityTests(unittest.TestCase):
         self.assertFalse(matrix["submission_ready_state_supported"])
         self.assertEqual(
             capabilities["REFERENCE_INTEGRITY"]["status"], "IMPLEMENTED"
+        )
+        self.assertEqual(
+            capabilities["STRUCTURED_CROSS_VALIDATION_REVIEW_PACKETS"]["status"],
+            "IMPLEMENTED",
         )
         for capability_id in (
             "AUTHENTICATED_APPROVAL_RBAC_SIGNATURE_AND_AUDIT",

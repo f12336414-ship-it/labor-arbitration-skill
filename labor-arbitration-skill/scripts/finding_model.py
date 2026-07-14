@@ -16,6 +16,34 @@ GUIDANCE = {
         "案件包内容或请求状态已变化，但包快照没有同步更新。",
         "Recalculate the RFC 8785 package snapshot from the complete current package.",
     ),
+    "REVIEW_PACKET_REFERENCE_UNKNOWN": (
+        "审查包引用了包内不存在的来源、问题或对象标识。",
+        "Correct the reference to an identifier declared in the same packet, then regenerate dependent snapshots.",
+    ),
+    "REVIEW_PACKET_RULE_DEPENDENCY_MISMATCH": (
+        "请求权或计算器的规则引用没有逐一绑定规则审查包版本。",
+        "Declare exactly one rule dependency for every rule_id, including the rule packet ID and both RFC 8785 snapshots.",
+    ),
+    "REVIEW_PACKET_SCHEMA_VALIDATION_ERROR": (
+        "审查包结构不符合发布的 v1.0 契约，不能进入交叉验证。",
+        "Correct the packet against references/review-packet.schema.json; do not add approval fields or weaken the schema.",
+    ),
+    "REVIEW_PACKET_SNAPSHOT_MISMATCH": (
+        "完整审查包已变化，但包快照没有按 RFC 8785 同步更新。",
+        "Recalculate packet_snapshot_sha256 after every status or review-record change.",
+    ),
+    "REVIEW_PACKET_STATUS_INVALID": (
+        "审查包状态与已有审核意见不一致，不能按该状态继续。",
+        "Use a status whose prerequisites match the review records; agreement never grants legal approval.",
+    ),
+    "REVIEW_SUBJECT_SNAPSHOT_MISMATCH": (
+        "规则、请求权或计算器审核对象已变化，旧的对象摘要和审核意见不能复用。",
+        "Recalculate review_subject_sha256 and obtain new cross-validation responses for the changed subject.",
+    ),
+    "REVIEW_QUESTION_SUBJECT_PATH_UNKNOWN": (
+        "审核问题指向的对象字段不存在，无法证明该字段已经被逐项审核。",
+        "Point subject_paths to fields that exist in the current subject, then regenerate snapshots and review responses.",
+    ),
     "SOURCE_HASH_STATUS_INVALID": (
         "当前版本没有认证抓取链，来源哈希状态只能保持“声明但未验证”。",
         "Set content_hash_status to DECLARED_UNVERIFIED or use a future authenticated fetch workflow outside v0.3.",
