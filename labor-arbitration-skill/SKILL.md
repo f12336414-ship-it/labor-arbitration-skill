@@ -5,6 +5,12 @@ description: Build and validate local Chinese labor-arbitration reference-integr
 
 # Labor Arbitration Reference-Integrity Core
 
+## Purpose
+
+Use this Skill between untrusted local-material collection or external structuring and independent legal review. Its current job is to create a reproducible technical handoff package containing an observed-byte manifest, a locked v1.2 structured case package, and a deterministic validation report that keeps every unverified legal property visible.
+
+The longer-term product goal is to help workers and their authorized assistants make the materials and gaps behind labor-arbitration automation inspectable. This release does not deliver the later legal-analysis or filing stages.
+
 Use this Skill as a local technical integrity workspace. It is not a lawyer, evidence authenticator, Beijing rule pack, limitation engine, professional claim calculator, approval system, or filing tool.
 
 Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). They are authoritative for implemented and unavailable behavior.
