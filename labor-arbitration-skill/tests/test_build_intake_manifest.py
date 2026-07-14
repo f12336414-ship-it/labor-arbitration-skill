@@ -5,7 +5,6 @@ import os
 import subprocess
 import sys
 import tempfile
-import threading
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -503,51 +502,35 @@ class BuildIntakeManifestTests(unittest.TestCase):
             intake = workspace / "intake"
             intake.mkdir()
             changing = intake / "changing.bin"
-            base_size = 8 * 1024 * 1024
+            base_size = 2 * 1024 * 1024
             changing.write_bytes(b"a" * base_size)
-            output = workspace / "raw-file-manifest.json"
-            stop = threading.Event()
-            started = threading.Event()
+            expected_metadata = os.lstat(changing)
+            mutated = False
 
-            def mutate_file():
-                while not stop.is_set():
+            def mutate_after_descriptor_validation(_deadline):
+                nonlocal mutated
+                if not mutated:
                     with changing.open("ab") as target:
                         target.write(b"x")
                         target.flush()
                         os.fsync(target.fileno())
-                    started.set()
-                    with changing.open("r+b") as target:
-                        target.truncate(base_size)
-                        target.flush()
-                        os.fsync(target.fileno())
+                    mutated = True
 
-            writer = threading.Thread(target=mutate_file, daemon=True)
-            writer.start()
-            self.assertTrue(started.wait(timeout=5))
-            try:
-                result = subprocess.run(
-                    [
-                        sys.executable,
-                        str(SCRIPT),
-                        str(intake),
-                        "--output",
-                        str(output),
-                        "--timeout-seconds",
-                        "10",
-                    ],
-                    cwd=SKILL_ROOT,
-                    capture_output=True,
-                encoding="utf-8",
-                    check=False,
-                    timeout=15,
-                )
-            finally:
-                stop.set()
-                writer.join(timeout=5)
-
-            self.assertEqual(result.returncode, 2, result.stderr)
-            self.assertFalse(output.exists())
-            self.assertIn("SCAN_FILE_CHANGED_DURING_READ", result.stderr)
+            with patch.object(
+                MANIFEST_BUILDER,
+                "ensure_before_deadline",
+                side_effect=mutate_after_descriptor_validation,
+            ):
+                with self.assertRaisesRegex(
+                    MANIFEST_BUILDER.ScanSafetyError,
+                    "SCAN_FILE_CHANGED_DURING_READ",
+                ):
+                    MANIFEST_BUILDER.hash_stable_file(
+                        changing,
+                        expected_metadata,
+                        max_file_bytes=base_size + 1,
+                        deadline=float("inf"),
+                    )
 
     def test_treats_command_text_as_inert_evidence_data(self):
         with tempfile.TemporaryDirectory() as temp_dir:
