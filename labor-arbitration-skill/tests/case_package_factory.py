@@ -1,6 +1,7 @@
 import copy
 import hashlib
-import json
+
+import rfc8785
 
 
 INTEGRITY_SEMANTICS = (
@@ -11,33 +12,56 @@ INTEGRITY_SEMANTICS = (
 
 def calculate_snapshot(package):
     snapshot_content = copy.deepcopy(package)
-    snapshot_content.pop("requested_state", None)
     snapshot_content.pop("package_snapshot_sha256", None)
+    snapshot_content.pop("state_request_sha256", None)
     snapshot_content.pop("approvals", None)
-    encoded = json.dumps(
-        snapshot_content,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return hashlib.sha256(rfc8785.dumps(snapshot_content)).hexdigest()
 
 
 def calculate_json_snapshot(value):
-    encoded = json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return hashlib.sha256(rfc8785.dumps(value)).hexdigest()
+
+
+def calculate_raw_id(relative_path, content_sha256):
+    digest = hashlib.sha256()
+    digest.update(relative_path.encode("utf-8"))
+    digest.update(b"\x00")
+    digest.update(bytes.fromhex(content_sha256))
+    return "RAW-" + digest.hexdigest()
 
 
 def make_intake_manifest(package):
     total_bytes = sum(item["size_bytes"] for item in package["raw_files"])
-    return {
-        "schema_version": "1.2",
+    manifest = {
+        "schema_version": "1.3",
         "integrity_semantics": INTEGRITY_SEMANTICS,
+        "canonicalization": "RFC8785",
+        "generator": {
+            "name": "labor-arbitration-skill/intake-manifest-builder",
+            "version": "0.3.0",
+            "build_identity_status": "UNATTESTED",
+            "runtime_source_sha256": "a" * 64,
+            "dependency_contract_sha256": "b" * 64,
+            "dependency_contract_kind": "HASH_LOCK",
+            "python_version": "3.10.0",
+            "platform": "Synthetic",
+        },
+        "provenance_boundary": {
+            "system_observations": "SYSTEM_OBSERVED_UNATTESTED",
+            "user_declarations": "NOT_PROVIDED",
+            "generator_authenticity": "NOT_VERIFIED",
+        },
+        "scan_observation": {
+            "started_at": "2026-07-14T00:00:00Z",
+            "completed_at": "2026-07-14T00:00:01Z",
+            "clock_status": "SYSTEM_CLOCK_UNATTESTED",
+            "tree_walks_completed": 2,
+        },
+        "output_security": {
+            "permissions_enforcement": "WINDOWS_DIRECTORY_ACL_INHERITED_NOT_VERIFIED",
+            "absolute_paths_emitted": False,
+            "relative_paths_may_contain_sensitive_data": True,
+        },
         "scan_policy": {
             "max_depth": 20,
             "max_file_bytes": 100 * 1024 * 1024,
@@ -49,8 +73,11 @@ def make_intake_manifest(package):
             "file_count": len(package["raw_files"]),
             "total_bytes": total_bytes,
         },
+        "relationships": [],
         "files": copy.deepcopy(package["raw_files"]),
     }
+    manifest["manifest_payload_sha256"] = calculate_json_snapshot(manifest)
+    return manifest
 
 
 def calculate_dependency_snapshot(package):
@@ -70,25 +97,49 @@ def calculate_dependency_snapshot(package):
     )
 
 
-def calculate_document_snapshot(package):
+def calculate_statement_snapshot(package):
     return calculate_json_snapshot({"statements": package.get("statements", [])})
+
+
+def calculate_state_request(package):
+    return calculate_json_snapshot(
+        {
+            "requested_state": package.get("requested_state"),
+            "package_snapshot_sha256": package.get("package_snapshot_sha256"),
+            "dependency_snapshot_sha256": package.get("dependency_snapshot_sha256"),
+            "statement_snapshot_sha256": package.get("statement_snapshot_sha256"),
+            "intake_manifest_sha256": package.get("intake_manifest_sha256"),
+        }
+    )
 
 
 def make_valid_reference_integrity_package():
     package = {
-        "schema_version": "1.2",
+        "schema_version": "1.3",
         "requested_state": "REFERENCE_INTEGRITY_VALIDATED",
+        "snapshot_canonicalization": "RFC8785",
         "jurisdiction": {"country": "CN", "province": "Beijing"},
         "dependency_snapshot_sha256": "d" * 64,
-        "document_snapshot_sha256": "e" * 64,
+        "statement_snapshot_sha256": "e" * 64,
+        "state_request_sha256": "c" * 64,
         "raw_files": [
             {
-                "raw_id": "RAW-0001",
+                "raw_id": calculate_raw_id("synthetic-evidence.txt", "f" * 64),
                 "relative_path": "synthetic-evidence.txt",
+                "path_sha256": hashlib.sha256(
+                    b"synthetic-evidence.txt"
+                ).hexdigest(),
                 "extension": ".txt",
+                "detected_media_type": "text/plain",
+                "media_type_detection": "MAGIC_PREFIX_V1",
+                "extension_media_type_mismatch": False,
                 "size_bytes": 18,
                 "sha256": "f" * 64,
+                "modified_at_ns": "0",
+                "filesystem_identity_sha256": "9" * 64,
                 "integrity_status": "INGESTION_BYTES_OBSERVED",
+                "observation_status": "SYSTEM_OBSERVED_UNATTESTED",
+                "user_provenance_status": "NOT_PROVIDED",
             }
         ],
         "source_artifacts": [
@@ -126,7 +177,7 @@ def make_valid_reference_integrity_package():
         "evidence": [
             {
                 "evidence_id": "E-001",
-                "raw_id": "RAW-0001",
+                "raw_id": calculate_raw_id("synthetic-evidence.txt", "f" * 64),
                 "location": {"type": "line", "value": "1"},
                 "integrity_status": "INGESTION_BYTES_OBSERVED",
             }
@@ -209,11 +260,12 @@ def make_valid_reference_integrity_package():
         make_intake_manifest(package)
     )
     package["dependency_snapshot_sha256"] = calculate_dependency_snapshot(package)
-    package["document_snapshot_sha256"] = calculate_document_snapshot(package)
+    package["statement_snapshot_sha256"] = calculate_statement_snapshot(package)
     package["package_snapshot_sha256"] = calculate_snapshot(package)
+    package["state_request_sha256"] = calculate_state_request(package)
     return package
 
 
 def make_valid_machine_candidate():
-    """Compatibility test-helper name returning the current v1.2 safe fixture."""
+    """Compatibility test-helper name returning the current v1.3 safe fixture."""
     return make_valid_reference_integrity_package()

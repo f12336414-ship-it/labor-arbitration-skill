@@ -8,11 +8,26 @@ import hashlib
 import json
 import os
 import re
+import sys
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path, PurePosixPath
-from urllib.parse import urlsplit
 
-import jsonschema
+SCRIPT_DIRECTORY = Path(__file__).resolve().parent
+if str(SCRIPT_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIRECTORY))
+
+from integrity_primitives import (  # noqa: E402
+    calculate_json_snapshot,
+    calculation_matches,
+    canonicalize_json,
+    expected_raw_id,
+    is_sha256,
+    parse_calendar_date,
+)
+from finding_model import finding  # noqa: E402
+from intake_manifest_policy import validate_intake_manifest  # noqa: E402
+from schema_validation import validate_published_schema  # noqa: E402
+from source_policy import validate_source_artifact  # noqa: E402
 
 
 MACHINE_GATED_STATES = {
@@ -27,18 +42,7 @@ ALLOWED_STATES = {
     "REFERENCE_INTEGRITY_VALIDATED",
     "REVALIDATION_REQUIRED",
 }
-SUPPORTED_SCHEMA_VERSIONS = {"1.2"}
-NORMATIVE_DOCUMENT_TYPES = {
-    "CONSTITUTION",
-    "LAW",
-    "ADMINISTRATIVE_REGULATION",
-    "JUDICIAL_INTERPRETATION",
-    "LOCAL_REGULATION",
-    "DEPARTMENT_RULE",
-    "LOCAL_GOVERNMENT_RULE",
-    "OFFICIAL_NORMATIVE_DOCUMENT",
-}
-FORMAL_BINDING_STATUSES = {"BINDING", "GENERALLY_APPLICABLE"}
+SUPPORTED_SCHEMA_VERSIONS = {"1.3"}
 ALLOWED_FACT_STATUSES = {
     "USER_ASSERTED",
     "EVIDENCE_LINKED",
@@ -57,20 +61,6 @@ IDENTIFIER_FIELDS = {
     "calculations": "calculation_id",
     "conflicts": "conflict_id",
     "statements": "statement_id",
-}
-REQUIRED_SOURCE_FIELDS = {
-    "source_id",
-    "canonical_url",
-    "publisher",
-    "document_title",
-    "document_type",
-    "legal_hierarchy",
-    "binding_status",
-    "jurisdiction",
-    "retrieved_at",
-    "content_sha256",
-    "content_hash_status",
-    "publisher_code",
 }
 REQUIRED_CALCULATION_FIELDS = {
     "calculation_id",
@@ -91,7 +81,9 @@ MACHINE_REQUIRED_FIELDS = {
     "requested_state",
     "jurisdiction",
     "dependency_snapshot_sha256",
-    "document_snapshot_sha256",
+    "snapshot_canonicalization",
+    "statement_snapshot_sha256",
+    "state_request_sha256",
     "intake_manifest_sha256",
     "package_snapshot_sha256",
     "privacy_review",
@@ -105,10 +97,6 @@ NESTED_ARRAY_FIELDS = {
 }
 MAX_CASE_PACKAGE_BYTES = 10 * 1024 * 1024
 DECIMAL_TEXT_PATTERN = re.compile(r"^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$")
-INTEGRITY_SEMANTICS = (
-    "Hashes and sizes describe bytes read from stable opened file descriptors during "
-    "ingestion; they do not prove authenticity, semantic meaning, or later immutability."
-)
 ALLOWED_ASSERTION_STATUSES = {"ASSERTED", "CONDITIONALLY_ASSERTED"}
 ALLOWED_PROOF_STATUSES = {
     "EVIDENCE_LINKED_UNVERIFIED",
@@ -129,15 +117,13 @@ ALLOWED_EVIDENCE_CONTROLLERS = {
     "SHARED",
     "UNKNOWN",
 }
-CASE_PACKAGE_SCHEMA_PATH = (
-    Path(__file__).resolve().parents[1] / "references" / "case-package.schema.json"
-)
 VERIFIED_REFERENCE_CAPABILITIES = [
     "ARITHMETIC_RECOMPUTATION",
     "PACKAGE_STRUCTURE",
     "REFERENCE_INTEGRITY",
 ]
 UNVERIFIED_LEGAL_CAPABILITIES = [
+    "AUTHENTICATED_STATE_TRANSITIONS",
     "BEIJING_RULE_PACK_COMPLETENESS",
     "CLAIM_ELEMENT_LEGAL_SUFFICIENCY",
     "DOCUMENT_SUBMISSION_READINESS",
@@ -145,23 +131,17 @@ UNVERIFIED_LEGAL_CAPABILITIES = [
     "EVIDENCE_AUTHENTICITY",
     "EVIDENCE_SEMANTIC_SUPPORT",
     "HUMAN_IDENTITY_AUTHENTICATION",
+    "GENERATOR_BUILD_AUTHENTICITY",
     "JURISDICTION_DETERMINATION",
     "LEGAL_APPLICABILITY",
     "LEGAL_SOURCE_CURRENTNESS",
     "LIMITATION_COMPUTATION",
     "PROFESSIONAL_CLAIM_CALCULATION",
+    "RENDERED_DOCUMENT_INTEGRITY",
 ]
 DEPRECATED_OUTPUT_STATES = {
     "HUMAN_APPROVED_FOR_SUBMISSION",
     "MACHINE_VALIDATED_CANDIDATE",
-}
-OFFICIAL_SOURCE_CANDIDATE_HOSTS = {
-    "BEIJING_GOVERNMENT": {"www.beijing.gov.cn"},
-    "BEIJING_HRSS": {"rsj.beijing.gov.cn", "fuwu.rsj.beijing.gov.cn"},
-    "MOHRSS": {"www.mohrss.gov.cn"},
-    "NATIONAL_LAWS_REGULATIONS_DATABASE": {"flk.npc.gov.cn"},
-    "STATE_COUNCIL": {"www.gov.cn"},
-    "SUPREME_PEOPLES_COURT": {"www.court.gov.cn"},
 }
 
 
@@ -181,82 +161,26 @@ class InputChangedError(OSError):
     """Raised when an input changes while it is being read."""
 
 
-def finding(code: str, path: str, message: str, severity: str = "P1") -> dict:
-    return {
-        "code": code,
-        "message": message,
-        "path": path,
-        "severity": severity,
-    }
-
-
-def format_schema_path(path_parts) -> str:
-    path = "$"
-    for part in path_parts:
-        path += f"[{part}]" if isinstance(part, int) else f".{part}"
-    return path
-
-
-def validate_published_schema(package: dict) -> list[dict]:
-    try:
-        schema = json.loads(CASE_PACKAGE_SCHEMA_PATH.read_text(encoding="utf-8"))
-        jsonschema.Draft202012Validator.check_schema(schema)
-        validator = jsonschema.Draft202012Validator(schema)
-    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
-        return [
-            finding(
-                "VALIDATOR_SCHEMA_UNAVAILABLE",
-                "$",
-                "The bundled v1.2 JSON Schema is unavailable or invalid.",
-                "P0",
-            )
-        ]
-
-    findings = []
-    seen_paths = set()
-    errors = sorted(
-        validator.iter_errors(package),
-        key=lambda error: (tuple(str(part) for part in error.absolute_path), error.message),
-    )
-    for error in errors:
-        path = format_schema_path(error.absolute_path)
-        if path in seen_paths:
-            continue
-        seen_paths.add(path)
-        findings.append(
-            finding(
-                "SCHEMA_VALIDATION_ERROR",
-                path,
-                "Package content does not conform to the published v1.2 JSON Schema.",
-                "P0",
-            )
-        )
-    return findings
+def configure_utf8_stdio() -> None:
+    """Make the JSON CLI contract independent of the host console code page."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="strict")
 
 
 def calculate_snapshot(package: dict) -> str:
     snapshot_content = {
         key: value
         for key, value in package.items()
-        if key not in {"requested_state", "package_snapshot_sha256", "approvals"}
+        if key
+        not in {
+            "package_snapshot_sha256",
+            "state_request_sha256",
+            "approvals",
+        }
     }
-    encoded = json.dumps(
-        snapshot_content,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-
-def calculate_json_snapshot(value) -> str:
-    encoded = json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return calculate_json_snapshot(snapshot_content)
 
 
 def calculate_dependency_snapshot(package: dict) -> str:
@@ -276,15 +200,19 @@ def calculate_dependency_snapshot(package: dict) -> str:
     )
 
 
-def calculate_document_snapshot(package: dict) -> str:
+def calculate_statement_snapshot(package: dict) -> str:
     return calculate_json_snapshot({"statements": package.get("statements", [])})
 
 
-def is_sha256(value) -> bool:
-    return (
-        isinstance(value, str)
-        and len(value) == 64
-        and all(character in "0123456789abcdef" for character in value.lower())
+def calculate_state_request(package: dict) -> str:
+    return calculate_json_snapshot(
+        {
+            "requested_state": package.get("requested_state"),
+            "package_snapshot_sha256": package.get("package_snapshot_sha256"),
+            "dependency_snapshot_sha256": package.get("dependency_snapshot_sha256"),
+            "statement_snapshot_sha256": package.get("statement_snapshot_sha256"),
+            "intake_manifest_sha256": package.get("intake_manifest_sha256"),
+        }
     )
 
 
@@ -329,97 +257,12 @@ def recompute_sum_decimal_inputs(calculation: dict):
 def is_safe_relative_path(value) -> bool:
     if not isinstance(value, str) or not value or "\\" in value:
         return False
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
     path = PurePosixPath(value)
     return not path.is_absolute() and ".." not in path.parts and value != "."
-
-
-def source_candidate_host_is_allowlisted(source: dict) -> bool:
-    publisher_code = source.get("publisher_code")
-    allowed_hosts = OFFICIAL_SOURCE_CANDIDATE_HOSTS.get(publisher_code, set())
-    canonical_url = source.get("canonical_url")
-    if not isinstance(canonical_url, str):
-        return False
-    try:
-        parsed = urlsplit(canonical_url)
-        port = parsed.port
-    except ValueError:
-        return False
-    return (
-        parsed.scheme.lower() == "https"
-        and parsed.hostname is not None
-        and parsed.hostname.lower() in allowed_hosts
-        and parsed.username is None
-        and parsed.password is None
-        and port in {None, 443}
-        and not parsed.fragment
-    )
-
-
-def validate_source_artifact(source: dict, source_index: int, package: dict) -> list[dict]:
-    findings = []
-    path = f"source_artifacts[{source_index}]"
-    missing_source_fields = sorted(
-        field for field in REQUIRED_SOURCE_FIELDS if not source.get(field)
-    )
-    if missing_source_fields:
-        findings.append(
-            finding(
-                "SOURCE_METADATA_INCOMPLETE",
-                path,
-                "Missing source metadata: " + ", ".join(missing_source_fields),
-            )
-        )
-    if not is_sha256(source.get("content_sha256")):
-        findings.append(
-            finding(
-                "SOURCE_CONTENT_HASH_INVALID",
-                f"{path}.content_sha256",
-                "Source candidates require a declared SHA-256-shaped content hash.",
-            )
-        )
-    canonical_url = source.get("canonical_url")
-    if not isinstance(canonical_url, str) or not canonical_url.lower().startswith(
-        "https://"
-    ):
-        findings.append(
-            finding(
-                "SOURCE_URL_UNSAFE",
-                f"{path}.canonical_url",
-                "Source candidates require a canonical HTTPS URL.",
-            )
-        )
-    if (
-        not source_candidate_host_is_allowlisted(source)
-        or source.get("content_hash_status") != "DECLARED_UNVERIFIED"
-    ):
-        findings.append(
-            finding(
-                "SOURCE_HOST_NOT_ALLOWLISTED",
-                f"{path}.canonical_url",
-                "The URL must match the declared publisher's official-source candidate allowlist and the hash must remain DECLARED_UNVERIFIED; this check does not verify page content or legal authority.",
-                "P0",
-            )
-        )
-    if (
-        source.get("document_type") not in NORMATIVE_DOCUMENT_TYPES
-        or source.get("binding_status") not in FORMAL_BINDING_STATUSES
-    ):
-        findings.append(
-            finding(
-                "SOURCE_NOT_NORMATIVE",
-                f"{path}.document_type",
-                "The declared source classification is outside the narrow normative candidate set; this check does not verify legal authority.",
-            )
-        )
-    if source.get("jurisdiction") != package.get("jurisdiction"):
-        findings.append(
-            finding(
-                "SOURCE_JURISDICTION_MISMATCH",
-                f"{path}.jurisdiction",
-                "A source candidate's declared jurisdiction must match the package declaration.",
-            )
-        )
-    return findings
 
 
 def reject_duplicate_keys(pairs):
@@ -508,6 +351,13 @@ def make_report(package: dict, findings: list[dict]) -> dict:
         "validation_scope": {
             "verified": VERIFIED_REFERENCE_CAPABILITIES if reference_scope_passed else [],
             "not_verified": UNVERIFIED_LEGAL_CAPABILITIES,
+        },
+        "integrity_contract": {
+            "canonicalization": "RFC8785",
+            "state_request_binding": "VERIFIED" if reference_scope_passed else "NOT_VERIFIED",
+            "statement_snapshot_only": True,
+            "rendered_document_snapshot": "NOT_IMPLEMENTED",
+            "generator_authenticity": "NOT_VERIFIED",
         },
     }
 
@@ -667,92 +517,21 @@ def validate_machine_structure(package: dict) -> tuple[list[dict], bool]:
     return findings, safe
 
 
-def validate_intake_manifest(package: dict, intake_manifest) -> list[dict]:
-    findings = []
-    if intake_manifest is None:
-        return [
-            finding(
-                "INTAKE_MANIFEST_REQUIRED",
-                "intake_manifest",
-                "Reference-integrity validation requires the independently generated intake manifest.",
-            )
-        ]
-    if not isinstance(intake_manifest, dict):
-        return [
-            finding(
-                "INTAKE_MANIFEST_INVALID",
-                "intake_manifest",
-                "The intake-manifest JSON root must be an object.",
-            )
-        ]
-    manifest_files = intake_manifest.get("files")
-    if (
-        intake_manifest.get("schema_version") != "1.2"
-        or intake_manifest.get("integrity_semantics") != INTEGRITY_SEMANTICS
-        or not isinstance(manifest_files, list)
-        or any(not isinstance(item, dict) for item in manifest_files)
-        or any(
-            not isinstance(item.get("size_bytes"), int)
-            or isinstance(item.get("size_bytes"), bool)
-            or item.get("size_bytes") < 0
-            for item in manifest_files
-            if isinstance(item, dict)
-        )
-    ):
-        return [
-            finding(
-                "INTAKE_MANIFEST_INVALID",
-                "intake_manifest",
-                "The intake manifest has an unsupported schema or malformed records.",
-            )
-        ]
-    scan_policy = intake_manifest.get("scan_policy")
-    summary = intake_manifest.get("summary")
-    integer_limits = ("max_depth", "max_file_bytes", "max_files", "max_total_bytes")
-    policy_valid = (
-        isinstance(scan_policy, dict)
-        and all(
-            isinstance(scan_policy.get(field), int)
-            and not isinstance(scan_policy.get(field), bool)
-            and scan_policy.get(field) >= (0 if field == "max_depth" else 1)
-            for field in integer_limits
-        )
-        and isinstance(scan_policy.get("timeout_seconds"), (int, float))
-        and not isinstance(scan_policy.get("timeout_seconds"), bool)
-        and scan_policy.get("timeout_seconds") > 0
-    )
-    expected_summary = {
-        "file_count": len(manifest_files),
-        "total_bytes": sum(item.get("size_bytes", 0) for item in manifest_files),
-    }
-    if not policy_valid or summary != expected_summary:
-        findings.append(
-            finding(
-                "INTAKE_SCAN_POLICY_INVALID",
-                "intake_manifest.scan_policy",
-                "Version 1.2 manifests require bounded scan policy and exact file-count/byte summaries.",
-                "P0",
-            )
-        )
-    if package.get("intake_manifest_sha256") != calculate_json_snapshot(
-        intake_manifest
-    ):
-        findings.append(
-            finding(
-                "INTAKE_MANIFEST_SNAPSHOT_MISMATCH",
-                "intake_manifest_sha256",
-                "The supplied intake manifest does not match the locked manifest snapshot.",
-            )
-        )
-    if package.get("raw_files") != manifest_files:
-        findings.append(
-            finding(
-                "RAW_FILES_MANIFEST_MISMATCH",
-                "raw_files",
-                "Case-package raw-file records must exactly match the intake manifest.",
-            )
-        )
-    return findings
+def semantic_collection_shapes_are_safe(package: dict) -> bool:
+    """Whether shared semantic loops can inspect records without type confusion."""
+    for collection_name in FORMAL_COLLECTIONS:
+        collection = package.get(collection_name, [])
+        if not isinstance(collection, list) or any(
+            not isinstance(item, dict) for item in collection
+        ):
+            return False
+    for claim in package.get("claims", []):
+        elements = claim.get("elements", [])
+        if not isinstance(elements, list) or any(
+            not isinstance(element, dict) for element in elements
+        ):
+            return False
+    return True
 
 
 def validate_case_package(package: dict, intake_manifest=None) -> dict:
@@ -784,13 +563,26 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
                 "Case-package schema version is not supported by this validator.",
             )
         )
-    findings.extend(validate_published_schema(package))
+    schema_findings = validate_published_schema(package)
+    findings.extend(schema_findings)
+    # Draft and deprecated states intentionally retain targeted safety findings,
+    # including unauthenticated-approval errors. Only unsafe collection shapes
+    # short-circuit the shared semantic loops. Machine-gated states use the richer
+    # structural error catalog below.
+    if (
+        schema_findings
+        and not requires_machine_gates
+        and not semantic_collection_shapes_are_safe(package)
+    ):
+        return make_report(package, findings)
 
     if requires_machine_gates:
         structure_findings, structurally_safe = validate_machine_structure(package)
         findings.extend(structure_findings)
         if not structurally_safe:
-            if package.get("package_snapshot_sha256") != calculate_snapshot(package):
+            if not calculation_matches(
+                package.get("package_snapshot_sha256"), calculate_snapshot, package
+            ):
                 findings.append(
                     finding(
                         "PACKAGE_SNAPSHOT_MISMATCH",
@@ -856,7 +648,9 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
 
         for hash_field in (
             "dependency_snapshot_sha256",
-            "document_snapshot_sha256",
+            "statement_snapshot_sha256",
+            "state_request_sha256",
+            "intake_manifest_sha256",
             "package_snapshot_sha256",
         ):
             if hash_field in package and not is_sha256(package.get(hash_field)):
@@ -881,28 +675,44 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
         for raw_index, raw_file in enumerate(package.get("raw_files", [])):
             size_bytes = raw_file.get("size_bytes")
             expected_integrity_status = "INGESTION_BYTES_OBSERVED"
+            relative_path = raw_file.get("relative_path")
+            content_sha256 = raw_file.get("sha256")
             if (
-                not is_safe_relative_path(raw_file.get("relative_path"))
+                not is_safe_relative_path(relative_path)
+                or raw_file.get("raw_id")
+                != expected_raw_id(relative_path, content_sha256)
+                or raw_file.get("path_sha256")
+                != hashlib.sha256(relative_path.encode("utf-8")).hexdigest()
                 or not isinstance(raw_file.get("extension"), str)
+                or not isinstance(raw_file.get("detected_media_type"), str)
+                or raw_file.get("media_type_detection") != "MAGIC_PREFIX_V1"
+                or not isinstance(raw_file.get("extension_media_type_mismatch"), bool)
                 or not isinstance(size_bytes, int)
                 or isinstance(size_bytes, bool)
                 or size_bytes < 0
-                or not is_sha256(raw_file.get("sha256"))
+                or not is_sha256(content_sha256)
+                or not isinstance(raw_file.get("modified_at_ns"), str)
+                or not raw_file.get("modified_at_ns", "x").isdigit()
+                or not is_sha256(raw_file.get("filesystem_identity_sha256"))
                 or raw_file.get("integrity_status") != expected_integrity_status
+                or raw_file.get("observation_status")
+                != "SYSTEM_OBSERVED_UNATTESTED"
+                or raw_file.get("user_provenance_status") != "NOT_PROVIDED"
             ):
                 findings.append(
                     finding(
                         "RAW_FILE_METADATA_INVALID",
                         f"raw_files[{raw_index}]",
-                        "Raw-file records require a relative path and SHA-256 checksum.",
+                        "Raw-file records require stable content/path identity, byte-derived media metadata, and explicit unattested provenance.",
                     )
                 )
         for source_index, source in enumerate(package.get("source_artifacts", [])):
             findings.extend(validate_source_artifact(source, source_index, package))
 
-    if requires_machine_gates and package.get(
-        "package_snapshot_sha256"
-    ) != calculate_snapshot(package):
+    has_state_binding = "state_request_sha256" in package
+    if (requires_machine_gates or has_state_binding) and not calculation_matches(
+        package.get("package_snapshot_sha256"), calculate_snapshot, package
+    ):
         findings.append(
             finding(
                 "PACKAGE_SNAPSHOT_MISMATCH",
@@ -910,9 +720,11 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
                 "The locked package snapshot does not match the package content.",
             )
         )
-    if requires_machine_gates and package.get(
-        "dependency_snapshot_sha256"
-    ) != calculate_dependency_snapshot(package):
+    if requires_machine_gates and not calculation_matches(
+        package.get("dependency_snapshot_sha256"),
+        calculate_dependency_snapshot,
+        package,
+    ):
         findings.append(
             finding(
                 "DEPENDENCY_SNAPSHOT_MISMATCH",
@@ -920,14 +732,26 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
                 "The dependency snapshot does not match legal sources, rules, and calculator metadata.",
             )
         )
-    if requires_machine_gates and package.get(
-        "document_snapshot_sha256"
-    ) != calculate_document_snapshot(package):
+    if requires_machine_gates and not calculation_matches(
+        package.get("statement_snapshot_sha256"),
+        calculate_statement_snapshot,
+        package,
+    ):
         findings.append(
             finding(
-                "DOCUMENT_SNAPSHOT_MISMATCH",
-                "document_snapshot_sha256",
-                "The document snapshot does not match the formal statements.",
+                "STATEMENT_SNAPSHOT_MISMATCH",
+                "statement_snapshot_sha256",
+                "The statement snapshot does not match the formal statements; rendered documents are outside this snapshot.",
+            )
+        )
+    if (requires_machine_gates or has_state_binding) and not calculation_matches(
+        package.get("state_request_sha256"), calculate_state_request, package
+    ):
+        findings.append(
+            finding(
+                "STATE_REQUEST_MISMATCH",
+                "state_request_sha256",
+                "The requested technical state is not bound to the current package and dependency snapshots.",
             )
         )
     if requires_machine_gates and package.get("jurisdiction") != {
@@ -1003,6 +827,16 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
                             "P0",
                         )
                     )
+                for date_field in ("knowledge_date", "relationship_end_date"):
+                    date_value = limitation.get(date_field)
+                    if date_value is not None and parse_calendar_date(date_value) is None:
+                        findings.append(
+                            finding(
+                                "DATE_FORMAT_INVALID",
+                                f"claims[{claim_index}].limitation_analysis.{date_field}",
+                                "Limitation date inputs must use a real ISO 8601 calendar date (YYYY-MM-DD).",
+                            )
+                        )
                 for evidence_index, evidence_id in enumerate(
                     limitation.get("evidence_ids", [])
                 ):
@@ -1015,7 +849,7 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
                             )
                         )
         for element_index, element in enumerate(claim.get("elements", [])):
-            if package.get("schema_version") == "1.2" and (
+            if package.get("schema_version") == "1.3" and (
                 "initial_burden_satisfied" in element
                 or element.get("initial_burden_status") != "UNVERIFIED"
             ):
@@ -1028,7 +862,7 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
                     )
                 )
             if (
-                package.get("schema_version") == "1.2"
+                package.get("schema_version") == "1.3"
                 and element.get("proof_status") == "SUPPORTED"
             ):
                 findings.append(
@@ -1247,7 +1081,7 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
                     )
                 )
             if (
-                package.get("schema_version") == "1.2"
+                package.get("schema_version") == "1.3"
                 and fact.get("status") == "TRIBUNAL_FOUND"
             ):
                 findings.append(
@@ -1288,6 +1122,31 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
                         )
                     )
         for rule_index, rule in enumerate(package.get("legal_rules", [])):
+            effective_from = parse_calendar_date(rule.get("effective_from"))
+            effective_to_value = rule.get("effective_to")
+            effective_to = (
+                None
+                if effective_to_value is None
+                else parse_calendar_date(effective_to_value)
+            )
+            if effective_from is None or (
+                effective_to_value is not None and effective_to is None
+            ):
+                findings.append(
+                    finding(
+                        "DATE_FORMAT_INVALID",
+                        f"legal_rules[{rule_index}]",
+                        "Rule effective dates must be real ISO 8601 calendar dates (YYYY-MM-DD).",
+                    )
+                )
+            elif effective_to is not None and effective_to < effective_from:
+                findings.append(
+                    finding(
+                        "DATE_INTERVAL_INVALID",
+                        f"legal_rules[{rule_index}].effective_to",
+                        "A rule's effective_to date cannot precede effective_from.",
+                    )
+                )
             if rule.get("source_id") not in known_source_ids:
                 findings.append(
                     finding(
@@ -1462,6 +1321,7 @@ def validate_case_package(package: dict, intake_manifest=None) -> dict:
 
 
 def main() -> int:
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("case_package", type=Path)
     parser.add_argument("--intake-manifest", type=Path)

@@ -1,13 +1,13 @@
 {
   "schema_version": "1.0",
-  "product_version": "0.2.1",
+  "product_version": "0.3.0",
   "product_name": "Labor Arbitration Reference-Integrity Core",
   "technical_identifier": "labor-arbitration-skill",
   "product_purpose": {
     "long_term_outcome": "Make the materials, references, versions, and unresolved gaps behind labor-arbitration automation inspectable by workers and their authorized reviewers.",
     "current_release_job": "Validate a bounded local reference-integrity package before handing it to an external legal review workflow.",
     "primary_use_moment": "After local materials have been collected or structured, but before relying on legal analysis, amounts, deadlines, or filing documents.",
-    "primary_output": "A reproducible technical handoff package: observed-byte manifest, locked v1.2 case package, and deterministic validation report.",
+    "primary_output": "A reproducible technical handoff package: observed-byte manifest, locked v1.3 case package, and deterministic validation report.",
     "success_condition": "A reviewer can reproduce the bytes, references, and snapshots used; relevant changes require revalidation; unverified legal properties remain visible."
   },
   "highest_automated_state": "REFERENCE_INTEGRITY_VALIDATED",
@@ -17,19 +17,31 @@
     {
       "id": "LOCAL_INGESTION_BYTE_OBSERVATION",
       "status": "IMPLEMENTED",
-      "guarantee": "Records size and SHA-256 for bytes read from stable opened regular-file descriptors within configured bounds.",
-      "does_not_guarantee": "Authenticity, semantic meaning, later immutability, malware safety, or completeness outside the scanned tree."
+      "guarantee": "Records stable path/content IDs, size and SHA-256 for bytes read from stable opened regular-file descriptors, then verifies a second complete tree walk within configured bounds.",
+      "does_not_guarantee": "A filesystem-atomic snapshot, authenticity, semantic meaning, later immutability, malware safety, or completeness outside the scanned tree."
+    },
+    {
+      "id": "INGESTION_PROVENANCE_BOUNDARY",
+      "status": "IMPLEMENTED",
+      "guarantee": "Separates unattested system observations, unavailable user provenance, generator/runtime metadata, output-permission status, and manifest self-hash.",
+      "does_not_guarantee": "Generator authenticity, operator identity, timestamp trust, Windows ACL enforcement, or evidence provenance."
+    },
+    {
+      "id": "BYTE_PREFIX_TYPE_AND_DUPLICATE_RELATIONSHIPS",
+      "status": "IMPLEMENTED",
+      "guarantee": "Reports byte-prefix media-type hints, extension mismatches, duplicate-content groups, and hardlink candidates without executing content.",
+      "does_not_guarantee": "Complete format validation, safe content, semantic parsing, or authenticity."
     },
     {
       "id": "PACKAGE_STRUCTURE_VALIDATION",
       "status": "IMPLEMENTED",
-      "guarantee": "Checks required v1.2 fields, supported values, bounded JSON input, and deterministic error output.",
+      "guarantee": "Checks required v1.3 fields, supported values, bounded JSON input, and deterministic error output.",
       "does_not_guarantee": "Truth of any field value or legal sufficiency."
     },
     {
       "id": "REFERENCE_INTEGRITY",
       "status": "IMPLEMENTED",
-      "guarantee": "Checks identifiers, cross-references, raw-file manifest equality, and canonical snapshot hashes.",
+      "guarantee": "Checks stable identifiers, cross-references, raw-file manifest equality, RFC 8785 snapshot hashes, manifest self-hash, statement snapshot, and requested-state binding.",
       "does_not_guarantee": "Evidence support, legal applicability, or document correctness."
     },
     {
@@ -101,6 +113,12 @@
     {
       "id": "AUTHENTICATED_APPROVAL_RBAC_SIGNATURE_AND_AUDIT",
       "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "RELEASE_SUPPLY_CHAIN_EVIDENCE",
+      "status": "IMPLEMENTED",
+      "guarantee": "Provides hashed dependency locks, runtime vulnerability audit, reproducible CycloneDX SBOM, commit-pinned Actions, and GitHub Tag artifact provenance workflow.",
+      "does_not_guarantee": "Authenticity of a locally generated intake manifest or trust in a compromised GitHub/PyPI root of trust."
     },
     {
       "id": "REAL_CASE_LEGAL_EVALUATION_CORPUS",

@@ -1,0 +1,3 @@
+-r labor-arbitration-skill/requirements.txt
+coverage==7.15.0
+hypothesis==6.156.4

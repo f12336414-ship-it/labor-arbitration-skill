@@ -1,10 +1,10 @@
-# Reliability Contract V1.2
+# Reliability Contract V1.3
 
 ## 1. Purpose and guarantee level
 
-This contract governs v0.2.0 of the local reference-integrity core. The technical identifier remains `labor-arbitration-skill` for compatibility.
+This contract governs v0.3.0 of the local reference-integrity core. The technical identifier remains `labor-arbitration-skill` for compatibility.
 
-The highest automated state is `REFERENCE_INTEGRITY_VALIDATED`. It means only that the requested v1.2 technical checks passed for a locked snapshot. It never means:
+The highest automated state is `REFERENCE_INTEGRITY_VALIDATED`. It means only that the requested v1.3 technical checks passed for a locked snapshot. It never means:
 
 - a fact is true;
 - evidence is authentic or semantically supportive;
@@ -21,7 +21,7 @@ The mandatory next state is `PENDING_LEGAL_REVIEW`, outside this project's trust
 - Local filesystem processing only.
 - Single process and single user; no account or tenant model.
 - Python 3.10 or later.
-- Case-package schema `1.2` only.
+- Case-package and intake-manifest schema `1.3` only.
 - Packages declared as `CN / Beijing` only. This is a narrow input scope, not a jurisdiction determination or Beijing rule-pack guarantee.
 - Synthetic test data only in the repository and CI.
 
@@ -34,7 +34,7 @@ Untrusted inputs include filenames, file contents, document metadata, prompts em
 Trusted implementation scope is limited to:
 
 - bounded traversal and hashing of stable opened regular files;
-- deterministic JSON parsing and canonical hashing;
+- RFC 8785 JSON canonicalization and hashing;
 - identifier and cross-reference checks;
 - manifest equality and snapshot binding;
 - the specified decimal addition and rounding primitive;
@@ -62,9 +62,9 @@ No model or local JSON field receives legal, evidentiary, privacy, risk, identit
 
 `INV-09` JSON names, actor types, roles, timestamps, URIs, or hashes never create a human approval, privacy approval, or P0/P1 risk resolution.
 
-`INV-10` A content or dependency change invalidates the canonical package snapshot and requires revalidation.
+`INV-10` A content, requested-state, or dependency change invalidates its RFC 8785 binding and requires revalidation.
 
-`INV-11` Schema 1.1 and the states `MACHINE_VALIDATED_CANDIDATE` and `HUMAN_APPROVED_FOR_SUBMISSION` are rejected; downgrade is not a compatibility path.
+`INV-11` Schema 1.2 and older schemas, plus the states `MACHINE_VALIDATED_CANDIDATE` and `HUMAN_APPROVED_FOR_SUBMISSION`, are rejected; downgrade is not a compatibility path.
 
 `INV-12` A zero exit code authorizes only the requested technical state. `legal_review_required` remains `true`.
 
@@ -76,8 +76,11 @@ The scanner:
 - rejects symbolic links, Windows reparse points and junctions, nested mount points, special files, network roots, unreadable entries, and output inside the input tree;
 - uses one opened descriptor for pre-read metadata, hashing, size, and post-read metadata;
 - compares the final path identity and metadata before publishing;
+- performs a second complete tree walk and rejects any added, removed, renamed, or observation-signature-changed file;
 - refuses a file that changes during observation;
-- writes the completed manifest atomically;
+- derives each `raw_id` from the UTF-8 relative path and observed content SHA-256, so unrelated insertions do not renumber existing files;
+- records byte-prefix media-type hints, extension mismatch flags, duplicate-content groups, and hardlink candidates without parsing content;
+- writes the completed manifest atomically and enforces POSIX mode `0600`; on Windows it records that inherited directory ACLs were not verified;
 - never executes or parses file contents.
 
 Default bounds are:
@@ -90,24 +93,28 @@ Default bounds are:
 | Directory depth | 20 |
 | Scan deadline | 60 seconds |
 
-Successful records use `INGESTION_BYTES_OBSERVED`. The manifest binds the configured limits and exact file-count/byte summary. Cancellation by the caller may stop the process; no partial manifest is published.
+Successful records use `INGESTION_BYTES_OBSERVED` and `SYSTEM_OBSERVED_UNATTESTED`. User provenance remains `NOT_PROVIDED`. The manifest binds configured limits, two scan timestamps from an unattested system clock, exact file-count/byte summary, generator/runtime metadata, output-security status, derived relationships, and an RFC 8785 payload self-hash. None of those fields authenticates the scanner build or operator. Cancellation by the caller may stop the process; no partial manifest is published.
 
 The scanner cannot create a filesystem-wide atomic snapshot. Files may change after a successful scan; consumers must retain and compare the locked manifest, rescan on change, and protect storage with external controls.
 
 ## 6. Canonical snapshots
 
-Canonical JSON uses UTF-8, sorted object keys, and no insignificant whitespace.
+Canonical JSON uses RFC 8785 (JCS), including its I-JSON input constraints, ECMAScript primitive serialization, UTF-16 object-property ordering, UTF-8 output, and no insignificant whitespace.
 
-- `intake_manifest_sha256` covers the complete supplied v1.2 intake manifest.
+Cross-language consumers must pass the published [RFC 8785 vectors](rfc8785-vectors.json) before exchanging hashes.
+
+- `manifest_payload_sha256` covers the v1.3 intake manifest excluding that self-hash field. It detects mutation but does not authenticate origin.
+- `intake_manifest_sha256` covers the complete supplied v1.3 intake manifest, including its self-hash.
 - `dependency_snapshot_sha256` covers source candidates, unverified rules, and calculator identifiers/versions/rounding policies.
-- `document_snapshot_sha256` covers formal statement records.
-- `package_snapshot_sha256` covers the package except `requested_state`, `package_snapshot_sha256`, and `approvals`.
+- `statement_snapshot_sha256` covers formal statement records only. It deliberately does not claim rendered-document integrity.
+- `package_snapshot_sha256` covers the package, including `requested_state`, except `state_request_sha256`, `package_snapshot_sha256`, and `approvals`.
+- `state_request_sha256` binds the requested technical state to the package, intake, dependency, and statement snapshots. It does not authenticate the actor or authorize a transition.
 
 The `approvals` collection must be empty. It is excluded only to make legacy tampering visible through the explicit approval rejection and to preserve deterministic migration behavior; it never grants authority.
 
 ## 7. Source candidates
 
-The validator requires HTTPS, no credentials, no non-default port, no fragment, a declared publisher code, a small exact host allowlist, and `content_hash_status=DECLARED_UNVERIFIED`.
+The validator requires HTTPS, no credentials, no non-default port, no fragment, a declared publisher code, a small exact host allowlist, and `content_hash_status=DECLARED_UNVERIFIED`. Host mismatch and unsupported hash status are separate error codes. Retrieval timestamps must be RFC 3339 UTC; rule and limitation inputs must be real ISO calendar dates, and a rule end date cannot precede its start date.
 
 Current candidate mappings are:
 
@@ -120,7 +127,7 @@ Current candidate mappings are:
 | `BEIJING_GOVERNMENT` | `www.beijing.gov.cn` |
 | `BEIJING_HRSS` | `rsj.beijing.gov.cn`, `fuwu.rsj.beijing.gov.cn` |
 
-The validator does not perform HTTP requests, follow redirects, freeze raw pages/PDFs, generate content hashes from fetched bytes, normalize content, compare quoted provisions, determine amendment/repeal relationships, monitor updates, or select an applicable historical version. Therefore no rule may be marked verified.
+The validator does not perform HTTP requests, follow redirects, freeze raw pages/PDFs, generate content hashes from fetched bytes, normalize content, compare quoted provisions, determine amendment/repeal relationships, monitor updates, or select an applicable historical version. Therefore no rule may be marked verified. Future source states and their proof requirements are defined in [the trust-state model](../../docs/trust-state-machine.md); v0.3 accepts none of those future states.
 
 ## 8. Evidence and facts
 

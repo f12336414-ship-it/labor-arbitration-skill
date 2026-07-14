@@ -4,7 +4,8 @@
 
 | Version | Supported |
 | --- | --- |
-| 0.2.x | Yes |
+| 0.3.x | Yes |
+| 0.2.x | No; migrate and rescan |
 | 0.1.x | No |
 | Earlier or unreleased forks | No |
 

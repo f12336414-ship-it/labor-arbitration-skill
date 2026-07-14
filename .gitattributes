@@ -1,8 +1,11 @@
 * text=auto
+
+*.json text eol=lf
+*.lock text eol=lf
 *.md text eol=lf
 *.py text eol=lf
+*.txt text eol=lf
 *.yaml text eol=lf
 *.yml text eol=lf
-*.json text eol=lf
 LICENSE text eol=lf
 NOTICE text eol=lf

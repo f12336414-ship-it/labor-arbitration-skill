@@ -1,0 +1,12 @@
+[run]
+branch = True
+source = labor-arbitration-skill/scripts
+parallel = True
+patch = subprocess
+
+[report]
+fail_under = 88
+show_missing = True
+skip_covered = True
+exclude_lines =
+    pragma: no cover

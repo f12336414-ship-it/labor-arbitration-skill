@@ -1,0 +1,17 @@
+{
+  "specification": "RFC 8785",
+  "vectors": [
+    {
+      "name": "UTF-16 property ordering across BMP and supplementary plane",
+      "input": {"": 1, "😀": 2},
+      "canonical_json": "{\"😀\":2,\"\":1}",
+      "sha256": "28c95d1bbb2209223307e62f489020e8f9e0cfa16adf2daf6d88127a1e8dd22a"
+    },
+    {
+      "name": "JSON literal ordering",
+      "input": {"literals": [null, true, false]},
+      "canonical_json": "{\"literals\":[null,true,false]}",
+      "sha256": "f4e3f047101e0191aeb3ebf17ee457cbf687f209bd983dade6ac183f86d93797"
+    }
+  ]
+}

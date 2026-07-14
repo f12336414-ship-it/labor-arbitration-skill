@@ -1,8 +1,10 @@
 # Release Checklist
 
 - [ ] `VERSION` 与 `CHANGELOG.md` 一致。
-- [ ] 完整单元测试和 Python 编译检查通过。
-- [ ] Draft 2020-12 Schema 元校验与完整 v1.2 样本校验通过。
+- [ ] 完整单元测试、Python 编译检查和 `coverage report --fail-under=88` 通过。
+- [ ] 案件包和 intake manifest 的 Draft 2020-12 Schema 元校验与完整 v1.3 样本校验通过。
+- [ ] `requirements.lock`/`requirements-test.lock`/`requirements-dev.lock` 可用 `--require-hashes` 安装，`pip-audit` 无已知漏洞。
+- [ ] `sbom.cdx.json` 可复现，Tag 工作流生成制品、SHA-256 和 GitHub build-provenance attestation。
 - [ ] Skill 官方结构验证通过。
 - [ ] CI、CodeQL 和依赖审查通过。
 - [ ] 未提交 `__pycache__`、真实案件数据、密钥、令牌或审批凭证。

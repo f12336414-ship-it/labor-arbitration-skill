@@ -7,13 +7,15 @@ description: Build and validate local Chinese labor-arbitration reference-integr
 
 ## Purpose
 
-Use this Skill between untrusted local-material collection or external structuring and independent legal review. Its current job is to create a reproducible technical handoff package containing an observed-byte manifest, a locked v1.2 structured case package, and a deterministic validation report that keeps every unverified legal property visible.
+Use this Skill between untrusted local-material collection or external structuring and independent legal review. Its current job is to create a reproducible technical handoff package containing an observed-byte manifest, a locked v1.3 structured case package, and a deterministic validation report that keeps every unverified legal property visible.
 
 The longer-term product goal is to help workers and their authorized assistants make the materials and gaps behind labor-arbitration automation inspectable. This release does not deliver the later legal-analysis or filing stages.
 
 Use this Skill as a local technical integrity workspace. It is not a lawyer, evidence authenticator, Beijing rule pack, limitation engine, professional claim calculator, approval system, or filing tool.
 
 Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). They are authoritative for implemented and unavailable behavior.
+
+For any non-zero result, follow [references/error-catalog.md](references/error-catalog.md); never edit the report or suppress a finding.
 
 ## Non-negotiable boundaries
 
@@ -47,7 +49,7 @@ python scripts/build_intake_manifest.py <input-directory> --output <manifest.jso
 
 Do not work around a refusal caused by limits, links, reparse points, mounts, network roots, special files, timeouts, unreadable paths, or file-change races. Correct the input scope and scan again.
 
-### 3. Build v1.2 records
+### 3. Build v1.3 records
 
 Create explicit records for raw files, typed evidence locations, facts, claim-element references, legal-source candidates, unverified rules, limitation event inputs, arithmetic inputs, conflicts, statements, and snapshots.
 
@@ -91,7 +93,7 @@ When any raw file, source candidate, rule declaration, calculation input, eviden
 From the repository root, install test dependencies, then run the suite from this directory:
 
 ```powershell
-python -m pip install -r ../requirements-dev.txt
+python -m pip install --require-hashes -r ../requirements-test.lock
 python -m unittest discover -s tests -v
 ```
 

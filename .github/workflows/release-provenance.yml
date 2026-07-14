@@ -1,0 +1,55 @@
+name: Release Provenance
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  build-and-attest:
+    name: Build, audit, and attest release artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.14"
+      - name: Install locked test dependencies
+        run: python -m pip install --disable-pip-version-check --require-hashes -r requirements-test.lock
+      - name: Test release candidate
+        working-directory: labor-arbitration-skill
+        run: |
+          python -m compileall -q scripts
+          python -m unittest discover -s tests -v
+      - name: Install locked release tools
+        run: python -m pip install --disable-pip-version-check --require-hashes -r requirements-dev.lock
+      - name: Audit runtime lock
+        run: python -m pip_audit -r requirements.lock --require-hashes --progress-spinner off
+      - name: Build release artifacts and reproducible SBOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME:-manual-${GITHUB_SHA}}"
+          mkdir -p dist
+          git archive --format=zip --prefix="labor-arbitration-skill-${version}/" -o "dist/labor-arbitration-skill-${version}.zip" HEAD
+          cyclonedx-py requirements requirements.lock --output-reproducible --of JSON -o "dist/labor-arbitration-skill-${version}.cdx.json" --validate
+          sha256sum dist/* > "dist/labor-arbitration-skill-${version}.sha256"
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-artifacts-${{ github.ref_name }}
+          path: dist/*
+          if-no-files-found: error
+      - name: Attest release artifact provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        with:
+          subject-path: dist/*
