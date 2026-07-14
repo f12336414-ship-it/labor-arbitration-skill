@@ -2,6 +2,12 @@
 
 本项目按 [Semantic Versioning](https://semver.org/) 记录公开版本变化。
 
+## [Unreleased]
+
+### Security
+
+- 将 CodeQL `init` 与 `analyze` 原子升级到固定 SHA 的 v4.37.0，避免拆分升级造成工作流版本不一致。
+
 ## [0.3.0] - 2026-07-14
 
 ### Changed
