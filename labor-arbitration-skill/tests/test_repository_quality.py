@@ -211,6 +211,46 @@ class RepositoryQualityTests(unittest.TestCase):
         )
         self.assertIn("technical handoff package", purpose["primary_output"])
         self.assertIn("external legal review", purpose["current_release_job"])
+        self.assertIn("casework system", purpose["long_term_outcome"])
+
+    def test_final_product_roadmap_and_progress_are_versioned_and_linked(self):
+        readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
+        requirements_path = REPOSITORY_ROOT / "docs" / "final-product-requirements.md"
+        roadmap_path = REPOSITORY_ROOT / "docs" / "implementation-roadmap.md"
+        progress_path = REPOSITORY_ROOT / "docs" / "progress.md"
+        boundary_adr_path = (
+            REPOSITORY_ROOT
+            / "docs"
+            / "adr"
+            / "0003-local-case-data-controlled-legal-network.md"
+        )
+
+        for path in (
+            requirements_path,
+            roadmap_path,
+            progress_path,
+            boundary_adr_path,
+        ):
+            with self.subTest(path=path.name):
+                self.assertTrue(path.is_file())
+
+        self.assertIn("docs/final-product-requirements.md", readme)
+        self.assertIn("docs/implementation-roadmap.md", readme)
+        self.assertIn("docs/progress.md", readme)
+
+        requirements = requirements_path.read_text(encoding="utf-8")
+        roadmap = roadmap_path.read_text(encoding="utf-8")
+        progress = progress_path.read_text(encoding="utf-8")
+        boundary_adr = boundary_adr_path.read_text(encoding="utf-8")
+
+        for capability_number in range(1, 22):
+            self.assertIn(f"CAP-{capability_number:02d}", requirements)
+        self.assertIn("P0-01", roadmap)
+        self.assertIn("P7-04", roadmap)
+        self.assertIn("最后更新：", progress)
+        self.assertIn("强制更新规则", progress)
+        self.assertIn("状态：Accepted", boundary_adr)
+        self.assertIn("法律新鲜度", boundary_adr)
 
     def test_published_schema_and_synthetic_example_are_machine_readable(self):
         schema_path = SKILL_ROOT / "references" / "case-package.schema.json"
