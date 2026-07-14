@@ -447,13 +447,15 @@ def emit_input_error(code: str, message: str) -> None:
 
 
 def input_metadata_signature(metadata: os.stat_result) -> tuple[int, ...]:
+    # st_ctime_ns is deprecated on Windows and is not a portable content
+    # stability signal. Identity, type, size, mtime, and byte count remain
+    # checked before, during, and after the read.
     return (
         metadata.st_dev,
         metadata.st_ino,
         metadata.st_mode,
         metadata.st_size,
         metadata.st_mtime_ns,
-        metadata.st_ctime_ns,
     )
 
 

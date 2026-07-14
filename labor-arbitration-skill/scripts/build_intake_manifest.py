@@ -46,13 +46,15 @@ def is_reparse_point(metadata: os.stat_result) -> bool:
 
 
 def metadata_signature(metadata: os.stat_result) -> tuple[int, ...]:
+    # Windows deprecated st_ctime_ns and may change its meaning between Python
+    # versions. File identity, type, size, mtime, and observed bytes provide the
+    # portable content-stability boundary used by this scanner.
     return (
         metadata.st_dev,
         metadata.st_ino,
         metadata.st_mode,
         metadata.st_size,
         metadata.st_mtime_ns,
-        metadata.st_ctime_ns,
     )
 
 
@@ -62,7 +64,6 @@ def entry_observation_signature(metadata: os.stat_result) -> tuple[int, ...]:
         stat.S_IFMT(metadata.st_mode),
         metadata.st_size,
         metadata.st_mtime_ns,
-        metadata.st_ctime_ns,
     )
 
 
