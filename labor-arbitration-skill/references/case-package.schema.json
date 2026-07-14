@@ -2,12 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/blob/main/labor-arbitration-skill/references/case-package.schema.json",
   "title": "Labor arbitration reference-integrity case package",
-  "description": "Structural schema for version 1.2. Passing this schema or the Python validator does not verify legal correctness, source currentness, evidence meaning, limitation, jurisdiction, professional claim amounts, privacy compliance, human identity, or submission readiness.",
+  "description": "Structural schema for version 1.3. Passing this schema or the Python validator does not verify legal correctness, source currentness, evidence meaning, limitation, jurisdiction, professional claim amounts, privacy compliance, human identity, generator authenticity, or submission readiness.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "requested_state"],
   "properties": {
-    "schema_version": {"const": "1.2"},
+    "schema_version": {"const": "1.3"},
     "requested_state": {
       "enum": [
         "INTERNAL_ANALYSIS",
@@ -17,9 +17,11 @@
         "REVALIDATION_REQUIRED"
       ]
     },
+    "snapshot_canonicalization": {"const": "RFC8785"},
     "jurisdiction": {"$ref": "#/$defs/jurisdiction"},
     "dependency_snapshot_sha256": {"$ref": "#/$defs/sha256"},
-    "document_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+    "statement_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+    "state_request_sha256": {"$ref": "#/$defs/sha256"},
     "intake_manifest_sha256": {"$ref": "#/$defs/sha256"},
     "package_snapshot_sha256": {"$ref": "#/$defs/sha256"},
     "raw_files": {"type": "array", "items": {"$ref": "#/$defs/raw_file"}},
@@ -51,8 +53,10 @@
       "then": {
         "required": [
           "jurisdiction",
+          "snapshot_canonicalization",
           "dependency_snapshot_sha256",
-          "document_snapshot_sha256",
+          "statement_snapshot_sha256",
+          "state_request_sha256",
           "intake_manifest_sha256",
           "package_snapshot_sha256",
           "raw_files",
@@ -94,18 +98,34 @@
       "required": [
         "raw_id",
         "relative_path",
+        "path_sha256",
         "extension",
+        "detected_media_type",
+        "media_type_detection",
+        "extension_media_type_mismatch",
         "size_bytes",
         "sha256",
-        "integrity_status"
+        "modified_at_ns",
+        "filesystem_identity_sha256",
+        "integrity_status",
+        "observation_status",
+        "user_provenance_status"
       ],
       "properties": {
-        "raw_id": {"$ref": "#/$defs/identifier"},
+        "raw_id": {"type": "string", "pattern": "^RAW-[0-9a-f]{64}$"},
         "relative_path": {"type": "string", "minLength": 1},
+        "path_sha256": {"$ref": "#/$defs/sha256"},
         "extension": {"type": "string"},
+        "detected_media_type": {"type": "string", "minLength": 1},
+        "media_type_detection": {"const": "MAGIC_PREFIX_V1"},
+        "extension_media_type_mismatch": {"type": "boolean"},
         "size_bytes": {"type": "integer", "minimum": 0},
         "sha256": {"$ref": "#/$defs/sha256"},
-        "integrity_status": {"const": "INGESTION_BYTES_OBSERVED"}
+        "modified_at_ns": {"type": "string", "pattern": "^[0-9]+$"},
+        "filesystem_identity_sha256": {"$ref": "#/$defs/sha256"},
+        "integrity_status": {"const": "INGESTION_BYTES_OBSERVED"},
+        "observation_status": {"const": "SYSTEM_OBSERVED_UNATTESTED"},
+        "user_provenance_status": {"const": "NOT_PROVIDED"}
       }
     },
     "source_artifact": {
@@ -144,7 +164,7 @@
         "legal_hierarchy": {"type": "string", "minLength": 1},
         "binding_status": {"type": "string", "minLength": 1},
         "jurisdiction": {"$ref": "#/$defs/jurisdiction"},
-        "retrieved_at": {"type": "string", "minLength": 1},
+        "retrieved_at": {"type": "string", "format": "date-time"},
         "content_sha256": {"$ref": "#/$defs/sha256"},
         "content_hash_status": {"const": "DECLARED_UNVERIFIED"}
       }
@@ -171,8 +191,13 @@
         "source_id": {"$ref": "#/$defs/identifier"},
         "provision": {"type": "string", "minLength": 1},
         "jurisdiction": {"$ref": "#/$defs/jurisdiction"},
-        "effective_from": {"type": "string"},
-        "effective_to": {"type": ["string", "null"]},
+        "effective_from": {"type": "string", "format": "date"},
+        "effective_to": {
+          "oneOf": [
+            {"type": "string", "format": "date"},
+            {"type": "null"}
+          ]
+        },
         "status": {"const": "UNVERIFIED_CANDIDATE"},
         "applicability_status": {"type": ["string", "null"]},
         "verified_at": {"type": "null"},
@@ -277,8 +302,18 @@
       ],
       "properties": {
         "accrual_basis": {"type": "string"},
-        "knowledge_date": {"type": ["string", "null"]},
-        "relationship_end_date": {"type": ["string", "null"]},
+        "knowledge_date": {
+          "oneOf": [
+            {"type": "string", "format": "date"},
+            {"type": "null"}
+          ]
+        },
+        "relationship_end_date": {
+          "oneOf": [
+            {"type": "string", "format": "date"},
+            {"type": "null"}
+          ]
+        },
         "interruption_events": {"type": "array", "items": {"type": "object"}},
         "suspension_intervals": {"type": "array", "items": {"type": "object"}},
         "special_rule": {"type": ["string", "null"]},

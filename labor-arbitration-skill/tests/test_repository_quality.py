@@ -45,7 +45,12 @@ class RepositoryQualityTests(unittest.TestCase):
             self.assertTrue((SKILL_ROOT / "scripts" / script_name).is_file())
 
     def test_repository_markdown_local_links_resolve(self):
-        for document in sorted(REPOSITORY_ROOT.rglob("*.md")):
+        documents = {
+            *REPOSITORY_ROOT.glob("*.md"),
+            *(REPOSITORY_ROOT / "docs").rglob("*.md"),
+            *SKILL_ROOT.rglob("*.md"),
+        }
+        for document in sorted(documents):
             text = document.read_text(encoding="utf-8")
             for target in re.findall(r"\[[^]]+\]\(([^)]+)\)", text):
                 if target.startswith(("http://", "https://", "#", "mailto:")):
@@ -88,6 +93,9 @@ class RepositoryQualityTests(unittest.TestCase):
 
     def test_repository_contains_open_source_release_files(self):
         required_files = {
+            ".coveragerc",
+            ".gitattributes",
+            ".github/workflows/release-provenance.yml",
             ".github/workflows/test.yml",
             ".gitignore",
             "CHANGELOG.md",
@@ -97,6 +105,12 @@ class RepositoryQualityTests(unittest.TestCase):
             "NOTICE",
             "README.md",
             "requirements-dev.txt",
+            "requirements-dev.in",
+            "requirements-dev.lock",
+            "requirements-test.in",
+            "requirements-test.lock",
+            "requirements.lock",
+            "sbom.cdx.json",
             "SECURITY.md",
             "SUPPORT.md",
             "VERSION",
@@ -109,9 +123,53 @@ class RepositoryQualityTests(unittest.TestCase):
 
         version = (REPOSITORY_ROOT / "VERSION").read_text(encoding="utf-8").strip()
         self.assertRegex(version, r"^0\.[0-9]+\.[0-9]+$")
+        changelog = (REPOSITORY_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+        self.assertIn(f"## [{version}]", changelog)
         license_text = (REPOSITORY_ROOT / "LICENSE").read_text(encoding="utf-8")
         self.assertIn("Apache License", license_text)
         self.assertIn("Version 2.0", license_text)
+
+    def test_supply_chain_contract_is_locked_pinned_and_machine_readable(self):
+        coverage_config = (REPOSITORY_ROOT / ".coveragerc").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("branch = True", coverage_config)
+        self.assertIn("patch = subprocess", coverage_config)
+        self.assertIn("fail_under = 88", coverage_config)
+
+        for filename in (
+            "requirements.lock",
+            "requirements-test.lock",
+            "requirements-dev.lock",
+        ):
+            text = (REPOSITORY_ROOT / filename).read_text(encoding="utf-8")
+            requirement_lines = [
+                line
+                for line in text.splitlines()
+                if line and not line[0].isspace() and not line.startswith("#")
+            ]
+            self.assertTrue(requirement_lines, filename)
+            self.assertTrue(
+                all("==" in line and line.endswith("\\") for line in requirement_lines),
+                filename,
+            )
+            self.assertIn("--hash=sha256:", text)
+
+        workflow_directory = REPOSITORY_ROOT / ".github" / "workflows"
+        for workflow in sorted(workflow_directory.glob("*.yml")):
+            text = workflow.read_text(encoding="utf-8")
+            for action, revision in re.findall(r"uses:\s+([^@\s]+)@([^\s]+)", text):
+                with self.subTest(workflow=workflow.name, action=action):
+                    self.assertRegex(revision, r"^[0-9a-f]{40}$")
+
+        sbom = json.loads(
+            (REPOSITORY_ROOT / "sbom.cdx.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(sbom["bomFormat"], "CycloneDX")
+        self.assertEqual(sbom["specVersion"], "1.6")
+        component_names = {item["name"] for item in sbom["components"]}
+        self.assertIn("jsonschema", component_names)
+        self.assertIn("rfc8785", component_names)
 
     def test_skill_states_the_untrusted_data_boundary(self):
         skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
@@ -156,19 +214,25 @@ class RepositoryQualityTests(unittest.TestCase):
 
     def test_published_schema_and_synthetic_example_are_machine_readable(self):
         schema_path = SKILL_ROOT / "references" / "case-package.schema.json"
+        intake_schema_path = SKILL_ROOT / "references" / "intake-manifest.schema.json"
         example_path = REPOSITORY_ROOT / "examples" / "synthetic-draft.json"
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        intake_schema = json.loads(intake_schema_path.read_text(encoding="utf-8"))
         example = json.loads(example_path.read_text(encoding="utf-8"))
 
         self.assertEqual(
             schema["$schema"], "https://json-schema.org/draft/2020-12/schema"
         )
         jsonschema.Draft202012Validator.check_schema(schema)
+        jsonschema.Draft202012Validator.check_schema(intake_schema)
         jsonschema.Draft202012Validator(schema).validate(
             make_valid_reference_integrity_package()
         )
-        self.assertEqual(schema["properties"]["schema_version"]["const"], "1.2")
+        self.assertEqual(schema["properties"]["schema_version"]["const"], "1.3")
         self.assertIn("intake_manifest_sha256", schema["properties"])
+        self.assertEqual(
+            intake_schema["properties"]["schema_version"]["const"], "1.3"
+        )
         self.assertEqual(example["requested_state"], "DRAFT")
 
         result = subprocess.run(
@@ -189,7 +253,7 @@ class RepositoryQualityTests(unittest.TestCase):
         matrix = json.loads(capability_path.read_text(encoding="utf-8"))
         capabilities = {item["id"]: item for item in matrix["capabilities"]}
 
-        self.assertEqual(matrix["product_version"], "0.2.1")
+        self.assertEqual(matrix["product_version"], "0.3.0")
         self.assertEqual(
             matrix["highest_automated_state"], "REFERENCE_INTEGRITY_VALIDATED"
         )

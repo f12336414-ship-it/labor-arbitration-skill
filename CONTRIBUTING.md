@@ -10,11 +10,13 @@
 4. 在 `labor-arbitration-skill` 目录运行：
 
    ```powershell
-   python -m pip install -r ../requirements-dev.txt
+   python -m pip install --require-hashes -r ../requirements-test.lock
    python -m unittest discover -s tests -v
    ```
 
 5. 提交 Pull Request，说明安全、隐私、兼容性和法律来源影响。
+
+依赖变更必须同时更新相应 `.in`、三个哈希锁文件和 `sbom.cdx.json`，并运行 `python -m pip_audit -r requirements.lock --require-hashes`。不要手工删除哈希或绕过固定 commit SHA 的 Actions。
 
 ## 数据规则
 

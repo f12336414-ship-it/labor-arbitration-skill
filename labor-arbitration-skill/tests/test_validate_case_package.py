@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import subprocess
 import sys
@@ -7,7 +8,8 @@ from pathlib import Path
 
 from tests.case_package_factory import (
     calculate_dependency_snapshot,
-    calculate_document_snapshot,
+    calculate_state_request,
+    calculate_statement_snapshot,
     calculate_snapshot,
     make_intake_manifest,
     make_valid_machine_candidate,
@@ -17,6 +19,16 @@ from tests.case_package_factory import (
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = SKILL_ROOT / "scripts" / "validate_case_package.py"
+
+
+def load_validator():
+    spec = importlib.util.spec_from_file_location("validator_under_test", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+VALIDATOR = load_validator()
 
 
 def run_validator(package, include_intake_manifest=True, intake_manifest=None):
@@ -114,7 +126,7 @@ class ValidateCasePackageTests(unittest.TestCase):
 
     def test_never_authenticates_human_approval_from_json_fields(self):
         package = make_valid_machine_candidate()
-        package["schema_version"] = "1.2"
+        package["schema_version"] = "1.3"
         package["requested_state"] = "HUMAN_APPROVED_FOR_SUBMISSION"
         package["package_snapshot_sha256"] = calculate_snapshot(package)
         package["approvals"] = [
@@ -142,7 +154,7 @@ class ValidateCasePackageTests(unittest.TestCase):
 
     def test_deprecates_the_misleading_machine_candidate_state(self):
         package = make_valid_machine_candidate()
-        package["schema_version"] = "1.2"
+        package["schema_version"] = "1.3"
         package["requested_state"] = "MACHINE_VALIDATED_CANDIDATE"
         package["package_snapshot_sha256"] = calculate_snapshot(package)
 
@@ -172,7 +184,7 @@ class ValidateCasePackageTests(unittest.TestCase):
 
     def test_blocks_uncomputed_limitation_conclusions(self):
         package = make_valid_machine_candidate()
-        package["schema_version"] = "1.2"
+        package["schema_version"] = "1.3"
         package["requested_state"] = "REFERENCE_INTEGRITY_VALIDATED"
         package["claims"][0]["limitation_analysis"].update(
             {
@@ -194,7 +206,7 @@ class ValidateCasePackageTests(unittest.TestCase):
 
     def test_blocks_generic_arithmetic_claiming_an_exact_legal_amount(self):
         package = make_valid_machine_candidate()
-        package["schema_version"] = "1.2"
+        package["schema_version"] = "1.3"
         package["requested_state"] = "REFERENCE_INTEGRITY_VALIDATED"
         package["claims"][0]["limitation_analysis"].update(
             {
@@ -217,7 +229,7 @@ class ValidateCasePackageTests(unittest.TestCase):
 
     def test_blocks_self_declared_current_legal_rules(self):
         package = make_valid_machine_candidate()
-        package["schema_version"] = "1.2"
+        package["schema_version"] = "1.3"
         package["requested_state"] = "REFERENCE_INTEGRITY_VALIDATED"
         package["claims"][0]["limitation_analysis"].update(
             {
@@ -249,7 +261,7 @@ class ValidateCasePackageTests(unittest.TestCase):
 
     def test_blocks_a_source_host_outside_its_official_candidate_allowlist(self):
         package = make_valid_machine_candidate()
-        package["schema_version"] = "1.2"
+        package["schema_version"] = "1.3"
         package["requested_state"] = "REFERENCE_INTEGRITY_VALIDATED"
         package["source_artifacts"][0].update(
             {
@@ -414,6 +426,7 @@ class ValidateCasePackageTests(unittest.TestCase):
             "reviewer_actor_type": "HUMAN",
         }
         package["package_snapshot_sha256"] = calculate_snapshot(package)
+        package["state_request_sha256"] = calculate_state_request(package)
 
         result = run_validator(package)
 
@@ -577,12 +590,12 @@ class ValidateCasePackageTests(unittest.TestCase):
             [finding["code"] for finding in report["findings"]],
         )
 
-    def test_blocks_a_fabricated_document_snapshot(self):
+    def test_blocks_a_fabricated_statement_snapshot(self):
         package = make_valid_machine_candidate()
-        package["document_snapshot_sha256"] = "a" * 64
+        package["statement_snapshot_sha256"] = "a" * 64
         self.assertNotEqual(
-            package["document_snapshot_sha256"],
-            calculate_document_snapshot(package),
+            package["statement_snapshot_sha256"],
+            calculate_statement_snapshot(package),
         )
 
         result = run_validator(package)
@@ -590,7 +603,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "DOCUMENT_SNAPSHOT_MISMATCH",
+            "STATEMENT_SNAPSHOT_MISMATCH",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -720,7 +733,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(report["error"]["code"], "INPUT_ROOT_NOT_OBJECT")
 
     def test_allows_an_incomplete_draft_without_running_formal_gates(self):
-        result = run_validator({"schema_version": "1.2", "requested_state": "DRAFT"})
+        result = run_validator({"schema_version": "1.3", "requested_state": "DRAFT"})
 
         self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
@@ -926,7 +939,7 @@ class ValidateCasePackageTests(unittest.TestCase):
     def test_blocks_a_machine_candidate_missing_dependency_snapshots(self):
         package = make_valid_machine_candidate()
         package.pop("dependency_snapshot_sha256")
-        package.pop("document_snapshot_sha256")
+        package.pop("statement_snapshot_sha256")
 
         result = run_validator(package)
 
@@ -988,6 +1001,24 @@ class ValidateCasePackageTests(unittest.TestCase):
         report = json.loads(result.stdout)
         self.assertIn(
             "COLLECTION_NOT_ARRAY",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_blocks_a_malformed_draft_collection_without_a_traceback(self):
+        package = {
+            "schema_version": "1.3",
+            "requested_state": "DRAFT",
+            "source_artifacts": {"source_id": "SOURCE-INVALID-SHAPE"},
+            "claims": "invalid-collection",
+        }
+
+        result = run_validator(package, include_intake_manifest=False)
+
+        self.assertEqual(result.returncode, 2)
+        self.assertNotIn("Traceback", result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "SCHEMA_VALIDATION_ERROR",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -1142,6 +1173,7 @@ class ValidateCasePackageTests(unittest.TestCase):
             "request_stage": "ARBITRATION",
         }
         package["package_snapshot_sha256"] = calculate_snapshot(package)
+        package["state_request_sha256"] = calculate_state_request(package)
 
         result = run_validator(package)
 
@@ -1542,6 +1574,101 @@ class ValidateCasePackageTests(unittest.TestCase):
             "STATEMENT_TRACE_INCOMPLETE",
             [finding["code"] for finding in report["findings"]],
         )
+
+    def test_uses_rfc8785_utf16_property_order_for_snapshot_canonicalization(self):
+        canonical = VALIDATOR.canonicalize_json({"\ue000": 1, "😀": 2})
+        self.assertEqual(canonical, '{"😀":2,"\ue000":1}'.encode("utf-8"))
+
+    def test_binds_requested_state_to_the_locked_package(self):
+        package = make_valid_reference_integrity_package()
+        package["requested_state"] = "REVALIDATION_REQUIRED"
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+        self.assertIn("PACKAGE_SNAPSHOT_MISMATCH", codes)
+        self.assertIn("STATE_REQUEST_MISMATCH", codes)
+
+    def test_splits_source_hash_status_from_host_allowlist_errors(self):
+        package = make_valid_reference_integrity_package()
+        package["source_artifacts"][0]["content_hash_status"] = "FETCH_VERIFIED"
+        package["dependency_snapshot_sha256"] = calculate_dependency_snapshot(package)
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+        package["state_request_sha256"] = calculate_state_request(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+        self.assertIn("SOURCE_HASH_STATUS_INVALID", codes)
+        self.assertNotIn("SOURCE_HOST_NOT_ALLOWLISTED", codes)
+        hash_finding = next(
+            item
+            for item in json.loads(result.stdout)["findings"]
+            if item["code"] == "SOURCE_HASH_STATUS_INVALID"
+        )
+        self.assertIn("哈希", hash_finding["message_zh"])
+        self.assertIn("DECLARED_UNVERIFIED", hash_finding["remediation"])
+
+    def test_rejects_invalid_rfc3339_and_calendar_date_values(self):
+        package = make_valid_reference_integrity_package()
+        package["source_artifacts"][0]["retrieved_at"] = "14/07/2026"
+        package["legal_rules"][0]["effective_from"] = "2026-02-30"
+        package["dependency_snapshot_sha256"] = calculate_dependency_snapshot(package)
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+        package["state_request_sha256"] = calculate_state_request(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+        self.assertIn("DATE_FORMAT_INVALID", codes)
+
+    def test_rejects_an_inverted_rule_effective_interval(self):
+        package = make_valid_reference_integrity_package()
+        package["legal_rules"][0]["effective_from"] = "2026-02-01"
+        package["legal_rules"][0]["effective_to"] = "2026-01-31"
+        package["dependency_snapshot_sha256"] = calculate_dependency_snapshot(package)
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+        package["state_request_sha256"] = calculate_state_request(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+        self.assertIn("DATE_INTERVAL_INVALID", codes)
+
+    def test_rejects_a_manifest_with_a_forged_self_hash(self):
+        package = make_valid_reference_integrity_package()
+        manifest = make_intake_manifest(package)
+        manifest["manifest_payload_sha256"] = "0" * 64
+        package["intake_manifest_sha256"] = VALIDATOR.calculate_json_snapshot(manifest)
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+        package["state_request_sha256"] = calculate_state_request(package)
+
+        result = run_validator(package, intake_manifest=manifest)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+        self.assertIn("INTAKE_MANIFEST_SELF_HASH_MISMATCH", codes)
+
+    def test_rejects_an_inverted_scan_time_interval(self):
+        package = make_valid_reference_integrity_package()
+        manifest = make_intake_manifest(package)
+        manifest["scan_observation"]["completed_at"] = "2026-07-13T23:59:59Z"
+        payload = dict(manifest)
+        payload.pop("manifest_payload_sha256")
+        manifest["manifest_payload_sha256"] = VALIDATOR.calculate_json_snapshot(payload)
+        package["intake_manifest_sha256"] = VALIDATOR.calculate_json_snapshot(manifest)
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+        package["state_request_sha256"] = calculate_state_request(package)
+
+        result = run_validator(package, intake_manifest=manifest)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+        self.assertIn("SCAN_TIME_INTERVAL_INVALID", codes)
 
 
 if __name__ == "__main__":

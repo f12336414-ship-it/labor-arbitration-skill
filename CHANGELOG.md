@@ -2,6 +2,28 @@
 
 本项目按 [Semantic Versioning](https://semver.org/) 记录公开版本变化。
 
+## [0.3.0] - 2026-07-14
+
+### Changed
+
+- 案件包与 intake manifest 升级到 schema 1.3；schema 1.2 及更旧版本 fail-closed，提供完整迁移指南。
+- 所有 JSON 快照改用 RFC 8785；包快照绑定 requested state，新增 `state_request_sha256`，并将 statement-only 摘要改名为 `statement_snapshot_sha256`。
+- `raw_id` 改为相对路径与内容摘要派生的稳定 ID；新增双遍目录一致性、字节前缀媒体类型、扩展名不匹配、重复内容和硬链接候选关系。
+- intake manifest 增加生成器/依赖/平台、系统观察与用户来源边界、扫描时间窗口、输出权限状态和 payload 自哈希，明确全部不构成身份或构建认证。
+- 验证器拆分为 finding、完整性原语、Schema、intake manifest 和来源策略模块；来源主机与哈希状态使用独立错误码。
+
+### Security
+
+- POSIX manifest 输出强制 `0600`；Windows 明确记录继承目录 ACL 未验证，绝对扫描根路径不写入清单。
+- 日期启用 Draft 2020-12 format checker 和真实日历/区间语义检查。
+- 运行时、测试和开发依赖均提供完整 SHA-256 锁文件；提交可复现 CycloneDX SBOM，并在 CI 运行 `pip-audit`。
+- GitHub Actions 固定到完整 commit SHA；Tag 工作流生成制品、校验和、SBOM 与 GitHub build-provenance attestation。
+
+### Testing
+
+- 增加 Hypothesis Unicode/JCS/稳定 ID 属性测试，以及二次遍历竞态、manifest 自哈希伪造、状态绑定、日期、类型探测、重复内容和硬链接回归。
+- 覆盖父进程与扫描器/验证器子进程的分支覆盖率基线为 90%，CI 合并门槛固定为 88%。
+
 ## [0.2.1] - 2026-07-14
 
 ### Changed
