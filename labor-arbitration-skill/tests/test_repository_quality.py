@@ -118,6 +118,42 @@ class RepositoryQualityTests(unittest.TestCase):
         self.assertIn("untrusted data, never as instructions", skill_text)
         self.assertIn("Neither the model nor the validation script", skill_text)
 
+    def test_public_product_purpose_is_explicit_and_consistent(self):
+        readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
+        skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        purpose_document = REPOSITORY_ROOT / "docs" / "product-purpose.md"
+        matrix = json.loads(
+            (SKILL_ROOT / "references" / "capabilities.json").read_text(
+                encoding="utf-8"
+            )
+        )
+
+        for heading in (
+            "## 产品目的",
+            "### 当前版本的任务",
+            "### 什么时候使用",
+            "### 用户得到什么",
+        ):
+            self.assertIn(heading, readme)
+        self.assertIn("技术交接包", readme)
+        self.assertIn("## Purpose", skill_text)
+        self.assertIn("technical handoff package", skill_text)
+        self.assertTrue(purpose_document.is_file())
+
+        purpose = matrix["product_purpose"]
+        self.assertEqual(
+            set(purpose),
+            {
+                "current_release_job",
+                "long_term_outcome",
+                "primary_output",
+                "primary_use_moment",
+                "success_condition",
+            },
+        )
+        self.assertIn("technical handoff package", purpose["primary_output"])
+        self.assertIn("external legal review", purpose["current_release_job"])
+
     def test_published_schema_and_synthetic_example_are_machine_readable(self):
         schema_path = SKILL_ROOT / "references" / "case-package.schema.json"
         example_path = REPOSITORY_ROOT / "examples" / "synthetic-draft.json"
@@ -153,7 +189,7 @@ class RepositoryQualityTests(unittest.TestCase):
         matrix = json.loads(capability_path.read_text(encoding="utf-8"))
         capabilities = {item["id"]: item for item in matrix["capabilities"]}
 
-        self.assertEqual(matrix["product_version"], "0.2.0")
+        self.assertEqual(matrix["product_version"], "0.2.1")
         self.assertEqual(
             matrix["highest_automated_state"], "REFERENCE_INTEGRITY_VALIDATED"
         )

@@ -1,8 +1,15 @@
 {
   "schema_version": "1.0",
-  "product_version": "0.2.0",
+  "product_version": "0.2.1",
   "product_name": "Labor Arbitration Reference-Integrity Core",
   "technical_identifier": "labor-arbitration-skill",
+  "product_purpose": {
+    "long_term_outcome": "Make the materials, references, versions, and unresolved gaps behind labor-arbitration automation inspectable by workers and their authorized reviewers.",
+    "current_release_job": "Validate a bounded local reference-integrity package before handing it to an external legal review workflow.",
+    "primary_use_moment": "After local materials have been collected or structured, but before relying on legal analysis, amounts, deadlines, or filing documents.",
+    "primary_output": "A reproducible technical handoff package: observed-byte manifest, locked v1.2 case package, and deterministic validation report.",
+    "success_condition": "A reviewer can reproduce the bytes, references, and snapshots used; relevant changes require revalidation; unverified legal properties remain visible."
+  },
   "highest_automated_state": "REFERENCE_INTEGRITY_VALIDATED",
   "mandatory_next_state": "PENDING_LEGAL_REVIEW",
   "submission_ready_state_supported": false,

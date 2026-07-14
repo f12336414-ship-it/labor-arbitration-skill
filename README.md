@@ -4,9 +4,42 @@
 [![CodeQL](https://github.com/f12336414-ship-it/labor-arbitration-skill/actions/workflows/codeql.yml/badge.svg)](https://github.com/f12336414-ship-it/labor-arbitration-skill/actions/workflows/codeql.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-技术标识仍为 `labor-arbitration-skill`，以保持安装路径和调用方式兼容。它是本地、只读优先的参考完整性工具，不是完整劳动仲裁产品，也不是律师、法律服务、证据鉴定或提交系统。
+## 产品目的
 
-v0.2.0 的自动化上限是 `REFERENCE_INTEGRITY_VALIDATED`：只表示 v1.2 结构、标识符、引用、快照、材料清单和通用算术重算通过。下一状态固定为 `PENDING_LEGAL_REVIEW`。`allowed=true` 也只适用于请求的技术状态，不代表法律正确、材料真实或可以提交。
+劳动仲裁材料准备最危险的问题之一，不是 AI 不会生成文字，而是它能把遗漏的材料、断裂的引用、未经核验的规则和猜测的结论包装成一份看起来完整的结果。
+
+本产品的长期目的，是帮助劳动者及其授权协助者把分散的案件材料整理成可由人重新检查的案件工作区：能够回答“使用了哪些材料、每项内容引用了什么、哪些地方仍缺失或未核验”，并阻止这些缺口被自动化隐藏。
+
+> 一句话：让劳动仲裁自动化的依据和缺口可追溯，而不是让未经核验的结论显得更可信。
+
+### 当前版本的任务
+
+v0.2.1 不是完整办案系统，而是位于“材料收集/外部结构化”和“专业法律复核”之间的本地技术交接层。它把已有本地文件及外部工具生成的结构化记录整理成一个技术交接包：
+
+1. 登记扫描时实际读取的文件字节、相对路径、大小和 SHA-256；
+2. 校验 v1.2 案件包中的 ID、引用、材料清单和快照是否一致；
+3. 重算受支持的通用小数加法；
+4. 明确列出尚未验证的法律、事实、证据、时效、金额和审批范围；
+5. 将锁定的案件包、清单与报告交给项目外部的法律复核流程。
+
+它的技术标识仍为 `labor-arbitration-skill`，以保持安装路径和调用方式兼容。
+
+### 什么时候使用
+
+- 已经收集了一批劳动仲裁相关文件，准备让 AI、脚本或人工继续整理之前；
+- 外部工具已经生成结构化事实、证据位置、候选规则或计算输入，需要检查引用是否断裂；
+- 材料或结构化记录发生变化，需要证明旧快照和旧报告不能继续复用；
+- 需要向法律审核者移交一份可复现的技术底稿，而不是只交一段 AI 生成文本。
+
+如果目标是直接判断请求权、仲裁时效、金额、管辖、证据证明力或生成提交文书，当前版本不适用。
+
+### 用户得到什么
+
+主要交付物不是法律答案，而是一个可复查的技术交接包：`raw-file-manifest.json`、锁定的 v1.2 case package 和确定性 validation report。成功标准是复核者能够重现自动化使用了哪些字节和引用，任何相关改动都会要求重新生成快照，同时未核验问题仍然清晰可见。
+
+完整目的、用户旅程和成功标准见[产品目的说明](docs/product-purpose.md)。
+
+v0.2.1 的自动化上限是 `REFERENCE_INTEGRITY_VALIDATED`：只表示 v1.2 结构、标识符、引用、快照、材料清单和通用算术重算通过。下一状态固定为 `PENDING_LEGAL_REVIEW`。`allowed=true` 也只适用于请求的技术状态，不代表法律正确、材料真实或可以提交。
 
 ## 能力边界
 
@@ -81,6 +114,7 @@ flowchart LR
 ## 文档与治理
 
 - [v0.2 二次审核报告](docs/audit-v0.2.md)
+- [产品目的说明](docs/product-purpose.md)
 - [可靠性契约](labor-arbitration-skill/references/reliability-contract.md)
 - [威胁模型](docs/threat-model.md)
 - [v0.2 架构决策](docs/adr/0001-truthful-trust-boundary-v0.2.md)
