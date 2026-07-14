@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local environments and secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Never commit real case workspaces or generated case artifacts
+case-data/
+cases/
+intake/
+private/
+*.case-package.json
+raw-file-manifest.json
+approval-artifact.json

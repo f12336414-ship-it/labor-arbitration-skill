@@ -1,0 +1,4 @@
+interface:
+  display_name: "中国劳动仲裁可靠性工作区"
+  short_description: "以可追溯证据、确定性计算和安全门禁辅助中国劳动仲裁案件分析"
+  default_prompt: "Use $labor-arbitration-skill to analyze a labor arbitration case with source, evidence, and safety gates."

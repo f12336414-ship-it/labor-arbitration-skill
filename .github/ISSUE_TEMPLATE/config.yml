@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: https://github.com/f12336414-ship-it/labor-arbitration-skill/security/advisories/new
+    about: 请私密报告门禁绕过、数据泄露或代码执行问题。
