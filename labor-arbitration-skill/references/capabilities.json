@@ -4,7 +4,7 @@
   "product_name": "Labor Arbitration Reference-Integrity Core",
   "technical_identifier": "labor-arbitration-skill",
   "product_purpose": {
-    "long_term_outcome": "Make the materials, references, versions, and unresolved gaps behind labor-arbitration automation inspectable by workers and their authorized reviewers.",
+    "long_term_outcome": "Provide a local-first, evidence-centered Chinese labor-dispute casework system for source-governed legal verification, claim analysis, deterministic calculations, traceable documents, human review, and quality gates.",
     "current_release_job": "Validate a bounded local reference-integrity package before handing it to an external legal review workflow.",
     "primary_use_moment": "After local materials have been collected or structured, but before relying on legal analysis, amounts, deadlines, or filing documents.",
     "primary_output": "A reproducible technical handoff package: observed-byte manifest, locked v1.3 case package, and deterministic validation report.",

@@ -8,9 +8,9 @@
 
 劳动仲裁材料准备最危险的问题之一，不是 AI 不会生成文字，而是它能把遗漏的材料、断裂的引用、未经核验的规则和猜测的结论包装成一份看起来完整的结果。
 
-本产品的长期目的，是帮助劳动者及其授权协助者把分散的案件材料整理成可由人重新检查的案件工作区：能够回答“使用了哪些材料、每项内容引用了什么、哪些地方仍缺失或未核验”，并阻止这些缺口被自动化隐藏。
+本产品的长期目的是建设一套面向中国大陆劳动争议的证据整理、法律核验、请求分析、金额计算、文书生成、庭审准备和风险审查一体化办案系统。系统以案件证据为核心，以官方法律和版本核验为依据，以确定性计算、句子级来源追踪、人工复核和质量门禁控制正式输出。
 
-> 一句话：让劳动仲裁自动化的依据和缺口可追溯，而不是让未经核验的结论显得更可信。
+> 一句话：让每个事实有证据、每个请求有要件、每个法律结论有现行依据、每个金额可复算、每份文书可追溯。
 
 ### 当前版本的任务
 
@@ -37,7 +37,7 @@ v0.3.0 不是完整办案系统，而是位于“材料收集/外部结构化”
 
 主要交付物不是法律答案，而是一个可复查的技术交接包：`raw-file-manifest.json`、锁定的 v1.3 case package 和确定性 validation report。成功标准是复核者能够重现自动化使用了哪些字节和引用，任何相关改动都会要求重新生成快照，同时未核验问题仍然清晰可见。
 
-完整目的、用户旅程和成功标准见[产品目的说明](docs/product-purpose.md)。
+完整目的、用户旅程和成功标准见[产品目的说明](docs/product-purpose.md)和[最终产品需求基线](docs/final-product-requirements.md)。
 
 v0.3.0 的自动化上限是 `REFERENCE_INTEGRITY_VALIDATED`：只表示 v1.3 结构、标识符、引用、快照、材料清单和通用算术重算通过。下一状态固定为 `PENDING_LEGAL_REVIEW`。`allowed=true` 也只适用于请求的技术状态，不代表法律正确、材料真实或可以提交。
 
@@ -116,12 +116,16 @@ flowchart LR
 
 ## 文档与治理
 
+- [最终产品需求基线](docs/final-product-requirements.md)
+- [最终产品实施路线图](docs/implementation-roadmap.md)
+- [最终产品实时进度](docs/progress.md)
 - [v0.2 二次审核报告](docs/audit-v0.2.md)
 - [v0.3 复审处置与证据](docs/review-resolution-v0.3.md)
 - [产品目的说明](docs/product-purpose.md)
 - [可靠性契约](labor-arbitration-skill/references/reliability-contract.md)
 - [威胁模型](docs/threat-model.md)
 - [v0.2 架构决策](docs/adr/0001-truthful-trust-boundary-v0.2.md)
+- [案件本地、法律受控联网架构决策](docs/adr/0003-local-case-data-controlled-legal-network.md)
 - [迁移指南](docs/migration-v0.2.md)
 - [v0.2 → v0.3 迁移指南](docs/migration-v0.3.md)
 - [来源与状态证明模型](docs/trust-state-machine.md)
