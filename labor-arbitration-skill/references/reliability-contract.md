@@ -1,325 +1,191 @@
-# Reliability Contract V1.1
+# Reliability Contract V1.2
 
-## Contents
+## 1. Purpose and guarantee level
 
-1. Decision status and scope
-2. Trust boundaries and invariants
-3. Public interfaces
-4. Case-package model
-5. Output state machine
-6. Deterministic gates
-7. Acceptance behaviors
-8. Deferred production decisions
+This contract governs v0.2.0 of the local reference-integrity core. The technical identifier remains `labor-arbitration-skill` for compatibility.
 
-## 1. Decision status and scope
+The highest automated state is `REFERENCE_INTEGRITY_VALIDATED`. It means only that the requested v1.2 technical checks passed for a locked snapshot. It never means:
 
-`READY_WITH_ASSUMPTIONS` applies only to the local, single-user, Beijing-focused evidence workspace and deterministic validation scripts described here.
+- a fact is true;
+- evidence is authentic or semantically supportive;
+- a source is current, authoritative, complete, correctly quoted, or applicable;
+- limitation, jurisdiction, employer identity, claim elements, remedies, or amounts are legally correct;
+- privacy review or risk acceptance occurred;
+- a human identity, role, signature, or approval was authenticated;
+- a document is complete, admissible, submission-ready, or likely to succeed.
 
-The following assumptions are reversible and intentionally narrow:
+The mandatory next state is `PENDING_LEGAL_REVIEW`, outside this project's trust boundary. The machine-readable capability registry is [capabilities.json](capabilities.json).
 
-- The user controls the local case files and chooses the working directory.
-- No external model, SaaS storage, database, identity provider, or production deployment is introduced.
-- The first release organizes evidence and validates structured packages; it does not contain a static legal opinion library.
-- `MACHINE_VALIDATED_CANDIDATE` means machine gates passed, not that a document is legally correct or ready to file.
-- Human legal review remains outside the automated trust boundary and must be represented by an attributable approval artifact.
+## 2. Supported scope
 
-The design becomes `NOT_READY` for multi-user hosting, external model processing, non-Beijing rule application, automatic filing, or production handling of real sensitive data until the deferred decisions in section 8 are resolved.
+- Local filesystem processing only.
+- Single process and single user; no account or tenant model.
+- Python 3.10 or later.
+- Case-package schema `1.2` only.
+- Packages declared as `CN / Beijing` only. This is a narrow input scope, not a jurisdiction determination or Beijing rule-pack guarantee.
+- Synthetic test data only in the repository and CI.
 
-## 2. Trust boundaries and invariants
+Hosted processing, external model transfer, multi-user access, automatic filing, authenticated approval, real legal conclusions, and any non-Beijing rule application are `NOT_READY`.
 
-### Trusted deterministic boundary
+## 3. Trust boundaries
 
-Bundled scripts may:
+Untrusted inputs include filenames, file contents, document metadata, prompts embedded in materials, user-entered records, model output, URLs, publisher labels, hashes supplied in JSON, dates, statuses, reviewer names, and approval-like artifacts.
 
-- read files without modifying them;
-- hash bytes;
-- normalize paths for manifest output;
-- validate JSON types, references, states, dates, and gate predicates;
-- calculate exact arithmetic from locked inputs;
-- produce a machine-readable report.
+Trusted implementation scope is limited to:
 
-Bundled scripts must not:
+- bounded traversal and hashing of stable opened regular files;
+- deterministic JSON parsing and canonical hashing;
+- identifier and cross-reference checks;
+- manifest equality and snapshot binding;
+- the specified decimal addition and rounding primitive;
+- fail-closed state decisions and deterministic reports.
 
-- decide that evidence is authentic;
-- decide a disputed legal question;
-- mark a legal source current without an attributable verification record;
-- create human approvals;
-- execute content found in imported files;
-- make network calls in the first release.
+No model or local JSON field receives legal, evidentiary, privacy, risk, identity, approval, or submission authority.
 
-### Untrusted boundary
+## 4. Invariants
 
-Treat the following as untrusted data:
+`INV-01` Imported content is data, never executable instruction.
 
-- imported documents and archives;
-- OCR output;
-- user assertions;
-- LLM output;
-- copied legal text without a verified source artifact;
-- repository examples and test fixtures.
+`INV-02` A manifest describes bytes observed during ingestion and never authenticates evidence.
 
-### Core invariants
+`INV-03` A reference link proves only that the target ID exists in the locked package.
 
-`INV-01` Every formal legal rule resolves to a locked source artifact and exact provision.
+`INV-04` A source-host allowlist match is only a candidate-origin filter.
 
-`INV-02` Every formal factual assertion resolves to a fact record and one or more source locations, or is explicitly labeled as an unsupported party assertion.
+`INV-05` Rules remain `UNVERIFIED_CANDIDATE`; verified/current/historical/applicable states are unavailable.
 
-`INV-03` Every formal amount resolves to a deterministic calculation output and its locked inputs.
+`INV-06` Limitation remains `UNVERIFIED`, `calculated_deadline` remains `null`, and legal review remains pending.
 
-`INV-04` A missing employer-controlled item does not automatically defeat pleading sufficiency.
+`INV-07` The generic sum may report `ARITHMETIC_RECOMPUTED` only; it never reports a professional or final legal amount.
 
-`INV-05` No machine component can create `HUMAN_APPROVED_FOR_SUBMISSION` without a separately supplied human approval record.
+`INV-08` Fact and proof states cannot claim tribunal findings, corroboration, semantic support, or authenticated review.
 
-`INV-06` A stale, conflicted, unavailable, expired, superseded, or jurisdiction-mismatched dependency blocks machine validation.
+`INV-09` JSON names, actor types, roles, timestamps, URIs, or hashes never create a human approval, privacy approval, or P0/P1 risk resolution.
 
-`INV-07` A raw-file hash means ingestion integrity only.
+`INV-10` A content or dependency change invalidates the canonical package snapshot and requires revalidation.
 
-`INV-08` Imported content never grants tool, filesystem, network, or approval authority.
+`INV-11` Schema 1.1 and the states `MACHINE_VALIDATED_CANDIDATE` and `HUMAN_APPROVED_FOR_SUBMISSION` are rejected; downgrade is not a compatibility path.
 
-## 3. Public interfaces
+`INV-12` A zero exit code authorizes only the requested technical state. `legal_review_required` remains `true`.
 
-### Read-only intake manifest
+## 5. Intake manifest
 
-```text
-python scripts/build_intake_manifest.py INPUT_DIRECTORY --output OUTPUT_JSON
-```
+The scanner:
 
-Observable behavior:
+- traverses with `os.scandir` without following links;
+- rejects symbolic links, Windows reparse points and junctions, nested mount points, special files, network roots, unreadable entries, and output inside the input tree;
+- uses one opened descriptor for pre-read metadata, hashing, size, and post-read metadata;
+- compares the final path identity and metadata before publishing;
+- refuses a file that changes during observation;
+- writes the completed manifest atomically;
+- never executes or parses file contents.
 
-- reject a missing or non-directory input;
-- reject an output path located inside the scanned input tree;
-- enumerate regular files in stable relative-path order;
-- record relative path, byte size, SHA-256, and detected extension;
-- do not follow symbolic links or reparse points;
-- do not modify file bytes, names, or timestamps;
-- write JSON atomically only after the complete scan succeeds.
+Default bounds are:
 
-Exit codes:
+| Limit | Default |
+| --- | ---: |
+| Files | 10,000 |
+| Single file | 100 MiB |
+| Total bytes | 1 GiB |
+| Directory depth | 20 |
+| Scan deadline | 60 seconds |
 
-- `0`: manifest written;
-- `1`: invalid invocation or system failure;
-- `2`: safety refusal.
-
-### Case-package validation
-
-```text
-python scripts/validate_case_package.py CASE_PACKAGE_JSON --intake-manifest INTAKE_MANIFEST_JSON
-```
-
-Observable behavior:
-
-- parse an explicitly versioned package;
-- independently parse and bind the read-only intake manifest for machine-gated states;
-- validate referential integrity and requested-state gates;
-- print a deterministic JSON report to standard output;
-- never mutate the case package;
-- return `0` only when the requested state is allowed;
-- return `2` for a well-formed package blocked by one or more gates;
-- return `1` for malformed input or a validator failure.
+Successful records use `INGESTION_BYTES_OBSERVED`. The manifest binds the configured limits and exact file-count/byte summary. Cancellation by the caller may stop the process; no partial manifest is published.
 
-The parsers reject duplicate object keys, `NaN`/infinity constants, non-object roots, unsafe nesting, and inputs larger than 10 MiB. The size limit applies to metadata packages; raw evidence bytes remain outside the JSON. A machine-gated package records `intake_manifest_sha256`, and its `raw_files` collection must exactly equal the independently supplied manifest's file records.
+The scanner cannot create a filesystem-wide atomic snapshot. Files may change after a successful scan; consumers must retain and compare the locked manifest, rescan on change, and protect storage with external controls.
 
-The report contains stable finding codes, paths, messages, severity, and the highest allowed output state.
-
-## 4. Case-package model
-
-The first supported schema version is `1.1`.
-
-### Canonical snapshots
-
-All snapshots use UTF-8 JSON with object keys sorted, no insignificant whitespace, and SHA-256 over the resulting bytes.
-
-- `intake_manifest_sha256` covers the complete independently supplied intake manifest.
-- `dependency_snapshot_sha256` covers source artifacts, legal rules, and each calculator's formula ID, version, and rounding policy.
-- `document_snapshot_sha256` covers the formal statement records.
-- `package_snapshot_sha256` covers the package except `requested_state`, `package_snapshot_sha256`, and `approvals`, allowing an external approval to bind the same candidate snapshot without being part of it.
+## 6. Canonical snapshots
 
-### Source artifact and legal rule
+Canonical JSON uses UTF-8, sorted object keys, and no insignificant whitespace.
 
-Keep publisher authority separate from legal effect.
+- `intake_manifest_sha256` covers the complete supplied v1.2 intake manifest.
+- `dependency_snapshot_sha256` covers source candidates, unverified rules, and calculator identifiers/versions/rounding policies.
+- `document_snapshot_sha256` covers formal statement records.
+- `package_snapshot_sha256` covers the package except `requested_state`, `package_snapshot_sha256`, and `approvals`.
 
-Required source-artifact concepts:
+The `approvals` collection must be empty. It is excluded only to make legacy tampering visible through the explicit approval rejection and to preserve deterministic migration behavior; it never grants authority.
 
-```text
-source_id
-canonical_url
-publisher
-document_title
-document_type
-legal_hierarchy
-binding_status
-jurisdiction
-retrieved_at
-content_sha256
-```
+## 7. Source candidates
 
-Required rule concepts:
+The validator requires HTTPS, no credentials, no non-default port, no fragment, a declared publisher code, a small exact host allowlist, and `content_hash_status=DECLARED_UNVERIFIED`.
 
-```text
-rule_id
-source_id
-provision
-effective_from
-effective_to
-status
-verified_at
-verified_by
-supersedes
-superseded_by
-```
+Current candidate mappings are:
 
-Only `VERIFIED_CURRENT` and time-matched `VERIFIED_HISTORICAL` may support machine validation. Official FAQs, explanations, typical cases, and ordinary decisions remain interpretive or case material unless a separate legally binding instrument exists.
+| Publisher code | Allowed host candidates |
+| --- | --- |
+| `NATIONAL_LAWS_REGULATIONS_DATABASE` | `flk.npc.gov.cn` |
+| `STATE_COUNCIL` | `www.gov.cn` |
+| `SUPREME_PEOPLES_COURT` | `www.court.gov.cn` |
+| `MOHRSS` | `www.mohrss.gov.cn` |
+| `BEIJING_GOVERNMENT` | `www.beijing.gov.cn` |
+| `BEIJING_HRSS` | `rsj.beijing.gov.cn`, `fuwu.rsj.beijing.gov.cn` |
 
-### Facts and evidence
+The validator does not perform HTTP requests, follow redirects, freeze raw pages/PDFs, generate content hashes from fetched bytes, normalize content, compare quoted provisions, determine amendment/repeal relationships, monitor updates, or select an applicable historical version. Therefore no rule may be marked verified.
 
-Allowed fact statuses:
+## 8. Evidence and facts
 
-```text
-EXTRACTED
-USER_ASSERTED
-REVIEWED_ASSERTION
-EVIDENCE_LINKED
-CORROBORATED
-DISPUTED
-UNKNOWN
-TRIBUNAL_FOUND
-```
+Evidence requires a raw-file ID and a typed non-empty location. The validator checks that IDs exist and that raw records equal the bound manifest.
 
-Every evidence link uses a typed location, for example page, row, message ID, timestamp, or byte range. An evidence record may state `INGESTION_INTEGRITY_VERIFIED`; it may not state `EVIDENCE_AUTHENTICATED` merely because hashes match.
+Allowed fact states are `USER_ASSERTED`, `EVIDENCE_LINKED`, `DISPUTED`, and `UNKNOWN`. `EVIDENCE_LINKED` means reference existence only.
 
-### Claim elements and burden stages
-
-Each claim element records:
-
-```text
-element_id
-assertion_status
-proof_status
-burden_stage
-evidence_controller
-initial_burden_satisfied
-production_request
-adverse_consequence_candidate
-fact_ids
-evidence_ids
-rule_ids
-```
-
-`proof_status` distinguishes `SUPPORTED`, `EMPLOYER_CONTROLLED_MISSING`, `MISSING`, and `DISPUTED`. The first two may support pleading when the initial burden and production-request predicates are satisfied; they do not establish final proof.
-
-Machine validation accepts assertion states `ASSERTED` and `CONDITIONALLY_ASSERTED`, explicit burden stages, and enumerated evidence controllers. `MISSING`, `DISPUTED`, fabricated statuses, or a claim element without both fact and rule links force `REVIEW_REQUIRED`.
-
-### Limitation analysis
+The project does not implement PDF/Office/email parsing, OCR, chat parsing, audio transcription, video extraction, page or timestamp existence checks, excerpt comparison, contradiction detection, authenticity analysis, semantic support scoring, proof-standard analysis, or human anchor confirmation.
 
-A Boolean `limitation_checked` is forbidden. Each claim records:
+## 9. Claims, limitation, and conflicts
 
-```text
-accrual_basis
-knowledge_date
-relationship_end_date
-interruption_events
-suspension_intervals
-special_rule
-calculated_deadline
-deadline_status
-evidence_ids
-review_status
-```
-
-Disputed accrual or interruption classification forces `REVIEW_REQUIRED` even when date arithmetic is exact.
-
-### Calculations
-
-Use `EXACT_GIVEN_ASSUMPTIONS`, `SCENARIO`, or `INCOMPLETE`; do not use `final` for a legally disputed amount. Lock the calculator version, formula identifier, decimal and rounding policy, inputs, source evidence, intermediate steps, and assumptions. Encode monetary inputs and results as canonical decimal strings rather than binary JSON numbers.
-
-Version 0.1 supports one deliberately generic deterministic primitive: `SUM_DECIMAL_INPUTS_V1`, calculator `1.0.0`, with `ROUND_HALF_UP_2`. The validator recomputes its result and every running-total intermediate step. It is not a labor-law formula by itself; a domain-specific claim formula must be added to the reviewed registry with tests before formal use.
-
-### Approval artifact
-
-A human approval record contains:
-
-```text
-approval_id
-reviewer_identity
-reviewer_role
-reviewer_actor_type
-approved_snapshot_sha256
-approved_scope
-approved_at_utc
-evidence_uri
-```
-
-`reviewer_actor_type` must be `HUMAN`. The approved snapshot hash must equal the package snapshot being promoted.
-
-This local reference validator checks the approval record and its snapshot binding; it does not cryptographically prove the reviewer's identity. Production deployments require an independently authenticated or signed approval channel and must not treat a model-populated JSON field as proof of human action.
-
-## 5. Output state machine
-
-Allowed transitions:
-
-```text
-INTERNAL_ANALYSIS -> DRAFT
-DRAFT -> REVIEW_REQUIRED
-REVIEW_REQUIRED -> MACHINE_VALIDATED_CANDIDATE
-MACHINE_VALIDATED_CANDIDATE -> HUMAN_APPROVED_FOR_SUBMISSION
-any nonterminal state -> REVALIDATION_REQUIRED
-REVALIDATION_REQUIRED -> REVIEW_REQUIRED
-```
-
-Automatic promotion is allowed only through `MACHINE_VALIDATED_CANDIDATE`. Human approval must be supplied from outside the model and validator.
-
-No state means guaranteed acceptance, admissibility, authenticity, or success.
-
-## 6. Deterministic gates
-
-For `MACHINE_VALIDATED_CANDIDATE`, require all of the following:
-
-- schema version is supported;
-- package, intake-manifest, document, and dependency snapshot hashes are present;
-- jurisdiction is Beijing and matches each formal rule;
-- raw-file records exactly match the independently supplied intake manifest and references resolve to those records;
-- each formal fact has an allowed status and typed source location;
-- each claim element has a burden-stage result;
-- employer-controlled missing evidence has an initial-burden record and production request;
-- every legal rule resolves to an allowed source artifact and time-matched version;
-- every limitation analysis is structured and not unresolved;
-- every amount is deterministic and not `INCOMPLETE`;
-- requested remedies have no unresolved duplication conflict;
-- every formal statement resolves to facts, rules, and calculations as applicable;
-- no dependency is stale, conflicted, unavailable, expired, superseded, or jurisdiction-mismatched;
-- adversarial review findings contain no open P0 or P1, and P0/P1 closure has attributable human resolution;
-- privacy review is recorded by an attributable human reviewer;
-- document and package snapshots match.
-
-For `HUMAN_APPROVED_FOR_SUBMISSION`, additionally require a matching approval artifact. The validator may verify it but may never generate it.
-
-## 7. Acceptance behaviors
-
-The first development milestone is accepted when tests prove through public interfaces that:
-
-1. Intake hashing is stable and does not alter source files.
-2. Unsafe output paths inside the intake tree are rejected.
-3. A machine candidate with an unknown or unusable rule is blocked.
-4. A machine candidate with an unlocated evidence claim is blocked.
-5. Employer-controlled missing evidence is not treated as an automatic pleading failure when the initial burden and production request are present.
-6. A Boolean-only limitation check is rejected.
-7. A human-approved state without a matching approval artifact is blocked.
-8. A changed package snapshot invalidates an earlier approval.
-9. Reports are deterministic and contain stable finding codes.
-10. Skill metadata passes the official validator.
-
-## 8. Deferred production decisions
-
-The following decisions block hosted or production use:
-
-- legal domain owner, specialist reviewer, and risk owner identities;
-- target users and whether legal services are provided to third parties;
-- complete Beijing rule-pack ownership and update service levels;
-- external-model vendor, data region, retention, training use, and subprocessors;
-- personal-information legal basis, notices, consent where required, impact assessment, and cross-border mechanism;
-- tenant and case authorization, encryption-key ownership, administrator access, and break-glass policy;
-- retention, deletion, legal hold, backup erasure, and audit preservation;
-- incident response, revocation notification, recovery objectives, and production observability;
-- formal evaluation corpus, blind holdout governance, severity-weighted thresholds, and independent legal approval.
-
-Until these are resolved, use synthetic fixtures for tests and keep real case data local.
+Claim elements may record IDs and declared workflow fields. `initial_burden_status` must remain `UNVERIFIED`. The project has no authoritative claim-element catalog or burden engine.
+
+Each claim carries a limitation data object, but it is data capture only:
+
+- `calculated_deadline=null`;
+- `deadline_status=UNVERIFIED`;
+- `review_status=PENDING_LEGAL_REVIEW`.
+
+Conflict records, if present, must remain `PENDING_LEGAL_REVIEW`. The project has no remedy compatibility, inclusion, offset, alternative-claim, or duplicate-period matrix.
+
+## 10. Arithmetic
+
+The only calculator is:
+
+- formula `SUM_DECIMAL_INPUTS_V1`;
+- calculator version `1.0.0`;
+- rounding `ROUND_HALF_UP_2`;
+- decimal-string inputs/results;
+- status `ARITHMETIC_RECOMPUTED`.
+
+It recomputes running totals and the final sum. It does not select a wage base, period, work-year fraction, cap, multiplier, remedy, tax treatment, paid-amount deduction, or claim relationship.
+
+## 11. States and report contract
+
+Supported package states are:
+
+- `INTERNAL_ANALYSIS`;
+- `DRAFT`;
+- `REVIEW_REQUIRED`;
+- `REFERENCE_INTEGRITY_VALIDATED`;
+- `REVALIDATION_REQUIRED`.
+
+For a successful reference-integrity request, the report returns:
+
+- `allowed=true`;
+- `allowed_scope=REQUESTED_TECHNICAL_STATE_ONLY`;
+- `highest_allowed_state=REFERENCE_INTEGRITY_VALIDATED`;
+- `legal_review_required=true`;
+- `next_required_state=PENDING_LEGAL_REVIEW`;
+- an explicit `validation_scope.verified` list;
+- an explicit `validation_scope.not_verified` list.
+
+Exit `2` means the parsed package is blocked. Exit `1` means an input is unreadable, malformed, unsafe, or over the parser limit.
+
+## 12. Production gates not met
+
+Production legal use remains blocked until independent owners approve and verify at least:
+
+- authoritative, versioned Beijing rule content and an update/freeze service;
+- per-claim limitation rules and legally reviewed test vectors;
+- versioned professional calculators and remedy-conflict rules;
+- evidence extraction, anchors, semantic/contradiction review, and human confirmation;
+- jurisdiction, arbitration body, and employer identity verification;
+- authenticated accounts, RBAC, separation of duties, signatures, immutable audit, retention, deletion, backup, and recovery;
+- privacy/legal basis and vendor/transfer controls for any hosted or model processing;
+- a governed, desensitized real-case evaluation corpus with severity-weighted acceptance thresholds;
+- independent legal-domain and risk-owner release approval.

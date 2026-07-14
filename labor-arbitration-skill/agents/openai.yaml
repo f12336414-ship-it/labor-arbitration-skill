@@ -1,4 +1,4 @@
 interface:
-  display_name: "中国劳动仲裁可靠性工作区"
-  short_description: "以可追溯证据、确定性计算和安全门禁辅助中国劳动仲裁案件分析"
-  default_prompt: "Use $labor-arbitration-skill to analyze a labor arbitration case with source, evidence, and safety gates."
+  display_name: "劳动仲裁引用完整性内核"
+  short_description: "本地校验材料清单、引用、快照与通用算术，不作法律正确性结论"
+  default_prompt: "Use $labor-arbitration-skill to build or validate a local reference-integrity package and stop at pending external legal review."

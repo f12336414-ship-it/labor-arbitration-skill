@@ -11,6 +11,7 @@ from tests.case_package_factory import (
     calculate_snapshot,
     make_intake_manifest,
     make_valid_machine_candidate,
+    make_valid_reference_integrity_package,
 )
 
 
@@ -57,6 +58,415 @@ def run_validator_text(text):
 
 
 class ValidateCasePackageTests(unittest.TestCase):
+    def test_reports_truthful_scope_for_reference_integrity_validation(self):
+        package = make_valid_reference_integrity_package()
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(
+            report["allowed_scope"], "REQUESTED_TECHNICAL_STATE_ONLY"
+        )
+        self.assertEqual(
+            report["highest_allowed_state"], "REFERENCE_INTEGRITY_VALIDATED"
+        )
+        self.assertEqual(report["next_required_state"], "PENDING_LEGAL_REVIEW")
+        self.assertTrue(report["legal_review_required"])
+        self.assertEqual(
+            report["validation_scope"]["verified"],
+            [
+                "ARITHMETIC_RECOMPUTATION",
+                "PACKAGE_STRUCTURE",
+                "REFERENCE_INTEGRITY",
+            ],
+        )
+        self.assertIn(
+            "LEGAL_SOURCE_CURRENTNESS",
+            report["validation_scope"]["not_verified"],
+        )
+        self.assertIn(
+            "EVIDENCE_SEMANTIC_SUPPORT",
+            report["validation_scope"]["not_verified"],
+        )
+        self.assertIn(
+            "LIMITATION_COMPUTATION",
+            report["validation_scope"]["not_verified"],
+        )
+        self.assertIn(
+            "HUMAN_IDENTITY_AUTHENTICATION",
+            report["validation_scope"]["not_verified"],
+        )
+
+    def test_blocks_fields_outside_the_published_schema(self):
+        package = make_valid_reference_integrity_package()
+        package["legal_conclusion"] = "fabricated"
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "SCHEMA_VALIDATION_ERROR",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_never_authenticates_human_approval_from_json_fields(self):
+        package = make_valid_machine_candidate()
+        package["schema_version"] = "1.2"
+        package["requested_state"] = "HUMAN_APPROVED_FOR_SUBMISSION"
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+        package["approvals"] = [
+            {
+                "approval_id": "APPROVAL-001",
+                "reviewer_identity": "HUMAN-REVIEWER-001",
+                "reviewer_role": "LEGAL_REVIEWER",
+                "reviewer_actor_type": "HUMAN",
+                "approved_snapshot_sha256": package["package_snapshot_sha256"],
+                "approved_scope": "synthetic test package",
+                "approved_at_utc": "2026-07-14T00:00:00Z",
+                "evidence_uri": "urn:synthetic:approval:001",
+            }
+        ]
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["highest_allowed_state"], "REVIEW_REQUIRED")
+        self.assertIn(
+            "UNAUTHENTICATED_APPROVAL_UNSUPPORTED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_deprecates_the_misleading_machine_candidate_state(self):
+        package = make_valid_machine_candidate()
+        package["schema_version"] = "1.2"
+        package["requested_state"] = "MACHINE_VALIDATED_CANDIDATE"
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "OUTPUT_STATE_DEPRECATED",
+            [finding["code"] for finding in report["findings"]],
+        )
+        self.assertEqual(report["replacement_state"], "REFERENCE_INTEGRITY_VALIDATED")
+
+    def test_rejects_legacy_schema_instead_of_allowing_a_trust_boundary_downgrade(self):
+        package = make_valid_machine_candidate()
+        package["schema_version"] = "1.1"
+        package["requested_state"] = "MACHINE_VALIDATED_CANDIDATE"
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        codes = [finding["code"] for finding in report["findings"]]
+        self.assertIn("SCHEMA_VERSION_UNSUPPORTED", codes)
+        self.assertIn("OUTPUT_STATE_DEPRECATED", codes)
+
+    def test_blocks_uncomputed_limitation_conclusions(self):
+        package = make_valid_machine_candidate()
+        package["schema_version"] = "1.2"
+        package["requested_state"] = "REFERENCE_INTEGRITY_VALIDATED"
+        package["claims"][0]["limitation_analysis"].update(
+            {
+                "calculated_deadline": "2027-01-01",
+                "deadline_status": "WITHIN_LIMITATION",
+                "review_status": "REVIEWED",
+            }
+        )
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "LIMITATION_CONCLUSION_UNVERIFIED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_blocks_generic_arithmetic_claiming_an_exact_legal_amount(self):
+        package = make_valid_machine_candidate()
+        package["schema_version"] = "1.2"
+        package["requested_state"] = "REFERENCE_INTEGRITY_VALIDATED"
+        package["claims"][0]["limitation_analysis"].update(
+            {
+                "calculated_deadline": None,
+                "deadline_status": "UNVERIFIED",
+                "review_status": "PENDING_LEGAL_REVIEW",
+            }
+        )
+        package["calculations"][0]["status"] = "EXACT_GIVEN_ASSUMPTIONS"
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "LEGAL_AMOUNT_STATUS_UNSUPPORTED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_blocks_self_declared_current_legal_rules(self):
+        package = make_valid_machine_candidate()
+        package["schema_version"] = "1.2"
+        package["requested_state"] = "REFERENCE_INTEGRITY_VALIDATED"
+        package["claims"][0]["limitation_analysis"].update(
+            {
+                "calculated_deadline": None,
+                "deadline_status": "UNVERIFIED",
+                "review_status": "PENDING_LEGAL_REVIEW",
+            }
+        )
+        package["calculations"][0]["status"] = "ARITHMETIC_RECOMPUTED"
+        package["legal_rules"][0].update(
+            {
+                "status": "VERIFIED_CURRENT",
+                "verified_at": "2026-07-14T00:00:00Z",
+                "verified_by": "LEGAL-REVIEWER-001",
+                "verification_actor_type": "HUMAN",
+            }
+        )
+        package["dependency_snapshot_sha256"] = calculate_dependency_snapshot(package)
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "RULE_VERIFICATION_CLAIM_UNSUPPORTED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_blocks_a_source_host_outside_its_official_candidate_allowlist(self):
+        package = make_valid_machine_candidate()
+        package["schema_version"] = "1.2"
+        package["requested_state"] = "REFERENCE_INTEGRITY_VALIDATED"
+        package["source_artifacts"][0].update(
+            {
+                "publisher_code": "NATIONAL_LAWS_REGULATIONS_DATABASE",
+                "canonical_url": "https://example.com/fake-law",
+                "content_hash_status": "DECLARED_UNVERIFIED",
+            }
+        )
+        package["legal_rules"][0].update(
+            {
+                "status": "UNVERIFIED_CANDIDATE",
+                "verified_at": None,
+                "verified_by": None,
+                "verification_actor_type": None,
+            }
+        )
+        package["claims"][0]["limitation_analysis"].update(
+            {
+                "calculated_deadline": None,
+                "deadline_status": "UNVERIFIED",
+                "review_status": "PENDING_LEGAL_REVIEW",
+            }
+        )
+        package["calculations"][0]["status"] = "ARITHMETIC_RECOMPUTED"
+        package["dependency_snapshot_sha256"] = calculate_dependency_snapshot(package)
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "SOURCE_HOST_NOT_ALLOWLISTED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_blocks_an_unreferenced_source_outside_the_candidate_allowlist(self):
+        package = make_valid_reference_integrity_package()
+        extra_source = dict(package["source_artifacts"][0])
+        extra_source.update(
+            {
+                "source_id": "SRC-UNREFERENCED",
+                "canonical_url": "https://example.com/fake-law",
+            }
+        )
+        package["source_artifacts"].append(extra_source)
+        package["dependency_snapshot_sha256"] = calculate_dependency_snapshot(package)
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "SOURCE_HOST_NOT_ALLOWLISTED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_checks_source_links_for_unreferenced_rule_records(self):
+        package = make_valid_reference_integrity_package()
+        extra_rule = dict(package["legal_rules"][0])
+        extra_rule.update(
+            {"rule_id": "RULE-UNREFERENCED", "source_id": "SRC-UNKNOWN"}
+        )
+        package["legal_rules"].append(extra_rule)
+        package["dependency_snapshot_sha256"] = calculate_dependency_snapshot(package)
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "RULE_SOURCE_UNKNOWN",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_blocks_tribunal_findings_without_external_authority_verification(self):
+        package = make_valid_reference_integrity_package()
+        package["facts"][0]["status"] = "TRIBUNAL_FOUND"
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "FACT_STATUS_EXTERNAL_AUTHORITY_REQUIRED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_blocks_semantically_verified_fact_statuses(self):
+        package = make_valid_reference_integrity_package()
+        package["facts"][0]["status"] = "CORROBORATED"
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "FACT_STATUS_SEMANTIC_VERIFICATION_UNSUPPORTED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_blocks_evidence_links_claiming_semantic_support(self):
+        package = make_valid_reference_integrity_package()
+        package["claims"][0]["elements"][0]["proof_status"] = "SUPPORTED"
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "EVIDENCE_SUPPORT_CLAIM_UNVERIFIED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_blocks_self_declared_initial_burden_satisfaction(self):
+        package = make_valid_reference_integrity_package()
+        element = package["claims"][0]["elements"][0]
+        element.pop("initial_burden_status")
+        element["initial_burden_satisfied"] = True
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "CLAIM_LEGAL_SUFFICIENCY_UNVERIFIED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_blocks_self_declared_claim_conflict_resolution(self):
+        package = make_valid_reference_integrity_package()
+        package["conflicts"] = [
+            {
+                "conflict_id": "CONFLICT-001",
+                "type": "POSSIBLE_DUPLICATION",
+                "status": "RESOLVED",
+            }
+        ]
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "CLAIM_CONFLICT_RESOLUTION_UNVERIFIED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_blocks_json_only_privacy_approval(self):
+        package = make_valid_reference_integrity_package()
+        package["privacy_review"] = {
+            "status": "COMPLETED",
+            "reviewed_by": "PRIVACY-REVIEWER-001",
+            "reviewed_at": "2026-07-14T00:00:00Z",
+            "reviewer_actor_type": "HUMAN",
+        }
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "UNAUTHENTICATED_PRIVACY_REVIEW_UNSUPPORTED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_rejects_approval_artifacts_without_an_authenticated_channel(self):
+        package = make_valid_reference_integrity_package()
+        package["approvals"] = [
+            {
+                "approval_id": "APPROVAL-001",
+                "reviewer_actor_type": "HUMAN",
+                "reviewer_identity": "ANY-TEXT",
+            }
+        ]
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "UNAUTHENTICATED_APPROVAL_UNSUPPORTED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
+    def test_rejects_human_text_fields_as_p0_p1_risk_resolution(self):
+        package = make_valid_reference_integrity_package()
+        package["adversarial_findings"] = [
+            {
+                "finding_id": "ATK-001",
+                "severity": "P1",
+                "status": "MITIGATED",
+                "title": "Synthetic blocker",
+                "resolution_actor_type": "HUMAN",
+                "resolved_by": "RISK-OWNER-001",
+                "resolved_at": "2026-07-14T00:00:00Z",
+            }
+        ]
+        package["package_snapshot_sha256"] = calculate_snapshot(package)
+
+        result = run_validator(package)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "UNAUTHENTICATED_RISK_RESOLUTION_UNSUPPORTED",
+            [finding["code"] for finding in report["findings"]],
+        )
+
     def test_blocks_a_fabricated_claim_element_status(self):
         package = make_valid_machine_candidate()
         package["claims"][0]["elements"][0]["proof_status"] = "GUARANTEED"
@@ -233,6 +643,21 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertIn("INTAKE_MANIFEST_SNAPSHOT_MISMATCH", codes)
         self.assertIn("RAW_FILES_MANIFEST_MISMATCH", codes)
 
+    def test_rejects_non_numeric_manifest_sizes_without_a_traceback(self):
+        package = make_valid_machine_candidate()
+        manifest = make_intake_manifest(package)
+        manifest["files"][0]["size_bytes"] = "not-a-number"
+
+        result = run_validator(package, intake_manifest=manifest)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn(
+            "INTAKE_MANIFEST_INVALID",
+            [finding["code"] for finding in report["findings"]],
+        )
+
     def test_reports_malformed_json_without_a_traceback(self):
         result = run_validator_text('{"schema_version":')
 
@@ -295,7 +720,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(report["error"]["code"], "INPUT_ROOT_NOT_OBJECT")
 
     def test_allows_an_incomplete_draft_without_running_formal_gates(self):
-        result = run_validator({"schema_version": "1.1", "requested_state": "DRAFT"})
+        result = run_validator({"schema_version": "1.2", "requested_state": "DRAFT"})
 
         self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
@@ -435,7 +860,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "PRIVACY_REVIEW_NOT_HUMAN",
+            "UNAUTHENTICATED_PRIVACY_REVIEW_UNSUPPORTED",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -458,7 +883,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "ADVERSARIAL_RESOLUTION_NOT_HUMAN",
+            "UNAUTHENTICATED_RISK_RESOLUTION_UNSUPPORTED",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -693,7 +1118,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         element["proof_status"] = "EMPLOYER_CONTROLLED_MISSING"
         element["evidence_controller"] = "EMPLOYER"
         element["evidence_ids"] = []
-        element["initial_burden_satisfied"] = False
+        element["initial_burden_status"] = "UNVERIFIED"
         element["production_request"] = None
 
         result = run_validator(package)
@@ -711,7 +1136,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         element["proof_status"] = "EMPLOYER_CONTROLLED_MISSING"
         element["evidence_controller"] = "EMPLOYER"
         element["evidence_ids"] = []
-        element["initial_burden_satisfied"] = True
+        element["initial_burden_status"] = "UNVERIFIED"
         element["production_request"] = {
             "requested_items": ["synthetic attendance record"],
             "request_stage": "ARBITRATION",
@@ -747,7 +1172,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "RULE_STATUS_NOT_ALLOWED",
+            "RULE_VERIFICATION_CLAIM_UNSUPPORTED",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -760,7 +1185,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "HUMAN_APPROVAL_MISSING",
+            "UNAUTHENTICATED_APPROVAL_UNSUPPORTED",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -784,7 +1209,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "APPROVAL_SNAPSHOT_MISMATCH",
+            "UNAUTHENTICATED_APPROVAL_UNSUPPORTED",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -816,11 +1241,11 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "HUMAN_APPROVAL_INVALID",
+            "UNAUTHENTICATED_APPROVAL_UNSUPPORTED",
             [finding["code"] for finding in report["findings"]],
         )
 
-    def test_allows_an_attributable_human_approval_for_the_locked_snapshot(self):
+    def test_rejects_an_attributable_json_approval_for_the_locked_snapshot(self):
         package = make_valid_machine_candidate()
         package["requested_state"] = "HUMAN_APPROVED_FOR_SUBMISSION"
         package["approvals"] = [
@@ -838,12 +1263,11 @@ class ValidateCasePackageTests(unittest.TestCase):
 
         result = run_validator(package)
 
-        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
-        self.assertTrue(report["allowed"])
-        self.assertEqual(
-            report["highest_allowed_state"],
-            "HUMAN_APPROVED_FOR_SUBMISSION",
+        self.assertIn(
+            "UNAUTHENTICATED_APPROVAL_UNSUPPORTED",
+            [finding["code"] for finding in report["findings"]],
         )
 
     def test_blocks_model_self_approval_even_with_complete_metadata(self):
@@ -867,7 +1291,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "HUMAN_APPROVAL_INVALID",
+            "UNAUTHENTICATED_APPROVAL_UNSUPPORTED",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -906,7 +1330,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "JURISDICTION_UNSUPPORTED",
+            "DECLARED_SCOPE_UNSUPPORTED",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -945,7 +1369,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "RULE_VERIFICATION_NOT_HUMAN",
+            "RULE_VERIFICATION_CLAIM_UNSUPPORTED",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -971,7 +1395,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "LIMITATION_REVIEW_REQUIRED",
+            "LIMITATION_CONCLUSION_UNVERIFIED",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -984,7 +1408,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "CALCULATION_STATUS_NOT_ALLOWED",
+            "LEGAL_AMOUNT_STATUS_UNSUPPORTED",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -1062,7 +1486,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "PRIVACY_REVIEW_MISSING",
+            "UNAUTHENTICATED_PRIVACY_REVIEW_UNSUPPORTED",
             [finding["code"] for finding in report["findings"]],
         )
 
@@ -1101,7 +1525,7 @@ class ValidateCasePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertIn(
-            "CLAIM_CONFLICT_UNRESOLVED",
+            "CLAIM_CONFLICT_RESOLUTION_UNVERIFIED",
             [finding["code"] for finding in report["findings"]],
         )
 
