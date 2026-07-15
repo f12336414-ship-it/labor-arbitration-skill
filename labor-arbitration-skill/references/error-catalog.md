@@ -15,6 +15,10 @@
 | `FACT_PREVIOUS_RECORD_*` / `FACT_TRANSITION_*` | 人工标注或失效修订缺少准确前序快照、时间回退或状态转换不合法 | 提供未改动的直接前序记录；从活动 `EXTRACTED` 记录重新派生，不得原地改状态 |
 | `FACT_STATE_*` / `FACT_EXACT_*` / `FACT_ADJUDICATIVE_*` | 来源状态、人员自声明、原文或裁判类文书上下文不一致 | 保持候选为未验证；逐字重放原锚点并重新记录自声明，禁止解释为事实真值或裁判认证 |
 | `FACT_ID_*` / `FACT_SNAPSHOT_*` / `FACT_ASSERTION_*` | 候选 ID、RFC 8785 快照或陈述文本摘要失效 | 从有效解析记录与前序记录重建新修订；不得覆盖原历史记录 |
+| `FACT_ANALYSIS_STRUCTURED_VALUE_INVALID` / `FACT_ANALYSIS_VIEW_*` | 日期、人民币金额、主体键、时间线角色或视图绑定不是规定的规范形式 | 回到原候选和人工结构化步骤，创建新视图；不得由系统从自由文本猜值 |
+| `FACT_ANALYSIS_CONFLICT_SET_MISMATCH` | 冲突集合被删除、增加、改序、自动选择或手工解决 | 用固定版本引擎重新生成全部未解决冲突；人工意见必须进入未来独立复核记录，不能改分析结果 |
+| `FACT_ANALYSIS_CONFLICT_LIMIT_EXCEEDED` | 精确逐对冲突超过 10,000 条安全上限 | 按明确维度或案件阶段拆分分析并保留全部来源；禁止截断、抽样或删除不利来源 |
+| `FACT_ANALYSIS_PREVIOUS_*` / `FACT_ANALYSIS_INVALIDATION_MISMATCH` | 直接前序缺失、损坏、跨对象、时间回退或变化键声明不完整 | 提供准确直接前序并重新生成；所有新增、删除或变化视图都必须触发下游重新验证 |
 | `INTAKE_MANIFEST_*` | manifest Schema、自哈希或案件包绑定失败 | 从原始目录重新生成 manifest，并按顺序重算 intake/package/state 摘要 |
 | `SOURCE_HOST_NOT_ALLOWLISTED` | URL 主机与声明发布者不匹配 | 修正 publisher code/URL，并在外部法律流程独立核验来源 |
 | `SOURCE_HASH_STATUS_INVALID` | JSON 试图声称当前没有的抓取/哈希证明 | 保持 `DECLARED_UNVERIFIED`；不得通过改名冒充已验证 |
