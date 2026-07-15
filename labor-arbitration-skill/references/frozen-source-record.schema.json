@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/frozen-source-record.schema.json",
+  "title": "Immutable official-source response-body record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "fetch_id",
+    "fetcher",
+    "publisher_code",
+    "purpose",
+    "requested_url",
+    "final_url",
+    "fetched_at",
+    "clock_status",
+    "http_status",
+    "media_type",
+    "content_length",
+    "content_sha256",
+    "object_relative_path",
+    "object_permissions",
+    "response_headers",
+    "network_hops",
+    "redirect_count",
+    "limitations",
+    "record_snapshot_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "fetch_id": {
+      "type": "string",
+      "pattern": "^FETCH-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{16}$"
+    },
+    "fetcher": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "runtime_source_sha256"],
+      "properties": {
+        "name": {"const": "LaborBalanceOfficialSourceFetcher"},
+        "version": {"const": "1.0.0"},
+        "runtime_source_sha256": {"$ref": "#/$defs/nullable_sha256"}
+      }
+    },
+    "publisher_code": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+    "purpose": {"enum": ["NORMATIVE_LEGAL_SOURCE", "OFFICIAL_CASE"]},
+    "requested_url": {"$ref": "#/$defs/https_url"},
+    "final_url": {"$ref": "#/$defs/https_url"},
+    "fetched_at": {"type": "string", "format": "date-time"},
+    "clock_status": {"const": "SYSTEM_CLOCK_UNATTESTED"},
+    "http_status": {"const": 200},
+    "media_type": {
+      "enum": [
+        "text/html",
+        "text/plain",
+        "application/pdf",
+        "application/json",
+        "application/xml",
+        "text/xml"
+      ]
+    },
+    "content_length": {"type": "integer", "minimum": 0, "maximum": 26214400},
+    "content_sha256": {"$ref": "#/$defs/sha256"},
+    "object_relative_path": {
+      "type": "string",
+      "pattern": "^objects/[0-9a-f]{2}/[0-9a-f]{64}\\.bin$"
+    },
+    "object_permissions": {
+      "enum": ["POSIX_MODE_0600", "WINDOWS_DIRECTORY_ACL_INHERITED_NOT_VERIFIED"]
+    },
+    "response_headers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["content_type", "content_length", "date", "etag", "last_modified"],
+      "properties": {
+        "content_type": {"$ref": "#/$defs/nullable_short_text"},
+        "content_length": {"$ref": "#/$defs/nullable_short_text"},
+        "date": {"$ref": "#/$defs/nullable_short_text"},
+        "etag": {"$ref": "#/$defs/nullable_short_text"},
+        "last_modified": {"$ref": "#/$defs/nullable_short_text"}
+      }
+    },
+    "network_hops": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {"$ref": "#/$defs/network_hop"}
+    },
+    "redirect_count": {"type": "integer", "minimum": 0, "maximum": 3},
+    "limitations": {
+      "const": [
+        "RESPONSE_BODY_ONLY_HTTP_FRAMING_NOT_RETAINED",
+        "SYSTEM_CLOCK_NOT_ATTESTED",
+        "SOURCE_AUTHORSHIP_AND_LEGAL_STATUS_NOT_VERIFIED",
+        "AUTOMATED_ACCESS_AUTHORIZATION_NOT_ASSERTED"
+      ]
+    },
+    "record_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullable_sha256": {
+      "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+    },
+    "https_url": {"type": "string", "pattern": "^https://", "maxLength": 2048},
+    "nullable_short_text": {
+      "oneOf": [
+        {"type": "string", "maxLength": 1000},
+        {"type": "null"}
+      ]
+    },
+    "network_hop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "status",
+        "peer_ip",
+        "tls_version",
+        "tls_cipher",
+        "peer_certificate_sha256",
+        "redirect_location"
+      ],
+      "properties": {
+        "url": {"$ref": "#/$defs/https_url"},
+        "status": {"type": "integer", "minimum": 100, "maximum": 599},
+        "peer_ip": {"type": "string", "minLength": 2, "maxLength": 64},
+        "tls_version": {"enum": ["TLSv1.2", "TLSv1.3"]},
+        "tls_cipher": {"type": "string", "minLength": 1, "maxLength": 200},
+        "peer_certificate_sha256": {"$ref": "#/$defs/sha256"},
+        "redirect_location": {
+          "oneOf": [{"$ref": "#/$defs/https_url"}, {"type": "null"}]
+        }
+      }
+    }
+  }
+}

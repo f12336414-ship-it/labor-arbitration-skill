@@ -40,7 +40,21 @@ class RepositoryQualityTests(unittest.TestCase):
 
         for script_name in (
             "build_intake_manifest.py",
+            "build_official_case_record.py",
+            "compare_legal_versions.py",
+            "create_case_workspace.py",
+            "fetch_official_case.py",
+            "fetch_official_source.py",
+            "select_historical_version.py",
             "validate_case_package.py",
+            "validate_case_workspace.py",
+            "validate_formal_output_state.py",
+            "validate_frozen_source.py",
+            "validate_historical_version.py",
+            "validate_legal_freshness.py",
+            "validate_legal_text_diff.py",
+            "validate_legal_version_graph.py",
+            "validate_official_case_record.py",
             "validate_review_packet.py",
         ):
             self.assertTrue((SKILL_ROOT / "scripts" / script_name).is_file())
@@ -88,7 +102,16 @@ class RepositoryQualityTests(unittest.TestCase):
                             called_names.add(node.func.id)
                         elif isinstance(node.func, ast.Attribute):
                             called_attributes.add(node.func.attr)
-                self.assertFalse(imported_roots & forbidden_import_roots)
+                allowed_network_imports = (
+                    {"http.client"}
+                    if script.name == "official_source_fetch.py"
+                    else set()
+                )
+                self.assertFalse(
+                    imported_roots & (forbidden_import_roots - allowed_network_imports)
+                )
+                if script.name != "official_source_fetch.py":
+                    self.assertNotIn("http.client", imported_roots)
                 self.assertFalse(called_names & {"eval", "exec", "compile"})
                 self.assertFalse(called_attributes & {"system", "popen"})
 
@@ -225,12 +248,16 @@ class RepositoryQualityTests(unittest.TestCase):
             / "adr"
             / "0003-local-case-data-controlled-legal-network.md"
         )
+        user_action_path = REPOSITORY_ROOT / "docs" / "user-action-register.md"
+        data_governance_path = REPOSITORY_ROOT / "docs" / "data-governance.md"
 
         for path in (
             requirements_path,
             roadmap_path,
             progress_path,
             boundary_adr_path,
+            user_action_path,
+            data_governance_path,
         ):
             with self.subTest(path=path.name):
                 self.assertTrue(path.is_file())
@@ -238,6 +265,8 @@ class RepositoryQualityTests(unittest.TestCase):
         self.assertIn("docs/final-product-requirements.md", readme)
         self.assertIn("docs/implementation-roadmap.md", readme)
         self.assertIn("docs/progress.md", readme)
+        self.assertIn("docs/user-action-register.md", readme)
+        self.assertIn("docs/data-governance.md", readme)
 
         requirements = requirements_path.read_text(encoding="utf-8")
         roadmap = roadmap_path.read_text(encoding="utf-8")
@@ -253,15 +282,51 @@ class RepositoryQualityTests(unittest.TestCase):
         self.assertIn("状态：Accepted", boundary_adr)
         self.assertIn("法律新鲜度", boundary_adr)
 
+        user_actions = user_action_path.read_text(encoding="utf-8")
+        data_governance = data_governance_path.read_text(encoding="utf-8")
+        for action_number in range(1, 10):
+            self.assertIn(f"U-{action_number:02d}", user_actions)
+        for classification in range(6):
+            self.assertIn(f"D{classification}", data_governance)
+        self.assertIn("不得发到 GitHub", user_actions)
+        self.assertIn("默认拒绝出站", data_governance)
+
     def test_published_schema_and_synthetic_example_are_machine_readable(self):
         schema_path = SKILL_ROOT / "references" / "case-package.schema.json"
         intake_schema_path = SKILL_ROOT / "references" / "intake-manifest.schema.json"
         review_schema_path = SKILL_ROOT / "references" / "review-packet.schema.json"
+        output_state_schema_path = (
+            SKILL_ROOT / "references" / "formal-output-state.schema.json"
+        )
+        frozen_source_schema_path = (
+            SKILL_ROOT / "references" / "frozen-source-record.schema.json"
+        )
+        registry_schema_path = (
+            SKILL_ROOT / "references" / "official-source-registry.schema.json"
+        )
+        registry_path = SKILL_ROOT / "references" / "official-source-registry.json"
         example_path = REPOSITORY_ROOT / "examples" / "synthetic-draft.json"
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         intake_schema = json.loads(intake_schema_path.read_text(encoding="utf-8"))
         review_schema = json.loads(review_schema_path.read_text(encoding="utf-8"))
+        output_state_schema = json.loads(
+            output_state_schema_path.read_text(encoding="utf-8")
+        )
+        frozen_source_schema = json.loads(
+            frozen_source_schema_path.read_text(encoding="utf-8")
+        )
+        registry_schema = json.loads(registry_schema_path.read_text(encoding="utf-8"))
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
         example = json.loads(example_path.read_text(encoding="utf-8"))
+
+        for published_schema_path in sorted(
+            (SKILL_ROOT / "references").glob("*.schema.json")
+        ):
+            with self.subTest(published_schema=published_schema_path.name):
+                published_schema = json.loads(
+                    published_schema_path.read_text(encoding="utf-8")
+                )
+                jsonschema.Draft202012Validator.check_schema(published_schema)
 
         self.assertEqual(
             schema["$schema"], "https://json-schema.org/draft/2020-12/schema"
@@ -269,6 +334,10 @@ class RepositoryQualityTests(unittest.TestCase):
         jsonschema.Draft202012Validator.check_schema(schema)
         jsonschema.Draft202012Validator.check_schema(intake_schema)
         jsonschema.Draft202012Validator.check_schema(review_schema)
+        jsonschema.Draft202012Validator.check_schema(output_state_schema)
+        jsonschema.Draft202012Validator.check_schema(frozen_source_schema)
+        jsonschema.Draft202012Validator.check_schema(registry_schema)
+        jsonschema.Draft202012Validator(registry_schema).validate(registry)
         jsonschema.Draft202012Validator(schema).validate(
             make_valid_reference_integrity_package()
         )
@@ -282,6 +351,38 @@ class RepositoryQualityTests(unittest.TestCase):
                 jsonschema.Draft202012Validator(review_schema).validate(
                     review_example
                 )
+        output_state_example = json.loads(
+            (
+                REPOSITORY_ROOT
+                / "examples"
+                / "output-states"
+                / "synthetic-internal-analysis.json"
+            ).read_text(encoding="utf-8")
+        )
+        jsonschema.Draft202012Validator(output_state_schema).validate(
+            output_state_example
+        )
+        legal_examples = {
+            "legal-version-graph.schema.json": "synthetic-version-graph.json",
+            "legal-freshness-check.schema.json": "synthetic-freshness-unchanged.json",
+            "legal-text-diff.schema.json": "synthetic-text-diff.json",
+            "historical-version-candidate.schema.json": "synthetic-historical-selection.json",
+        }
+        for schema_name, example_name in legal_examples.items():
+            with self.subTest(legal_example=example_name):
+                legal_schema = json.loads(
+                    (SKILL_ROOT / "references" / schema_name).read_text(
+                        encoding="utf-8"
+                    )
+                )
+                legal_example = json.loads(
+                    (
+                        REPOSITORY_ROOT / "examples" / "legal-sources" / example_name
+                    ).read_text(encoding="utf-8")
+                )
+                jsonschema.Draft202012Validator(
+                    legal_schema, format_checker=jsonschema.FormatChecker()
+                ).validate(legal_example)
         self.assertEqual(schema["properties"]["schema_version"]["const"], "1.3")
         self.assertIn("intake_manifest_sha256", schema["properties"])
         self.assertEqual(
@@ -318,6 +419,38 @@ class RepositoryQualityTests(unittest.TestCase):
         )
         self.assertEqual(
             capabilities["STRUCTURED_CROSS_VALIDATION_REVIEW_PACKETS"]["status"],
+            "IMPLEMENTED",
+        )
+        self.assertEqual(
+            capabilities["FORMAL_OUTPUT_STATE_INVALIDATION_CONTRACT"]["status"],
+            "IMPLEMENTED",
+        )
+        self.assertEqual(
+            capabilities["OFFICIAL_SOURCE_CANDIDATE_HOST_FILTER"]["status"],
+            "IMPLEMENTED",
+        )
+        self.assertEqual(
+            capabilities["LEGAL_SOURCE_FETCH_FREEZE_AND_VERSIONING"]["status"],
+            "PARTIAL",
+        )
+        self.assertEqual(
+            capabilities["LOCAL_CONTENT_ADDRESSED_CASE_WORKSPACE"]["status"],
+            "IMPLEMENTED",
+        )
+        self.assertEqual(
+            capabilities["LEGAL_VERSION_GRAPH_AND_EXACT_TEXT_DIFF"]["status"],
+            "IMPLEMENTED",
+        )
+        self.assertEqual(
+            capabilities["LEGAL_TECHNICAL_FRESHNESS_BINDING"]["status"],
+            "PARTIAL",
+        )
+        self.assertEqual(
+            capabilities["HISTORICAL_VERSION_INTERVAL_CANDIDATE"]["status"],
+            "IMPLEMENTED",
+        )
+        self.assertEqual(
+            capabilities["CONTROLLED_OFFICIAL_CASE_COLLECTION"]["status"],
             "IMPLEMENTED",
         )
         for capability_id in (

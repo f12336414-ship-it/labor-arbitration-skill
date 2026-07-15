@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/legal-freshness-check.schema.json",
+  "title": "Technical legal-source freshness observation",
+  "description": "Binds a baseline frozen source to a later controlled observation. It does not determine legal currentness or applicability.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "check_id",
+    "document_id",
+    "publisher_code",
+    "checked_at",
+    "max_age_hours",
+    "snapshot_canonicalization",
+    "baseline",
+    "network_status",
+    "observation",
+    "response_change",
+    "technical_freshness_status",
+    "limitations",
+    "check_snapshot_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "check_id": {"type": "string", "pattern": "^FRESH-[A-Z0-9][A-Z0-9_-]{0,55}$"},
+    "document_id": {"$ref": "#/$defs/identifier"},
+    "publisher_code": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+    "checked_at": {"type": "string", "format": "date-time"},
+    "max_age_hours": {"type": "integer", "minimum": 1, "maximum": 720},
+    "snapshot_canonicalization": {"const": "RFC8785"},
+    "baseline": {"$ref": "#/$defs/frozen_binding"},
+    "network_status": {"enum": ["SUCCESS", "UNAVAILABLE"]},
+    "observation": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/frozen_binding"}
+      ]
+    },
+    "response_change": {"enum": ["UNCHANGED", "CHANGED", "UNKNOWN"]},
+    "technical_freshness_status": {
+      "enum": [
+        "UNCHANGED_RESPONSE_BODY_CANDIDATE",
+        "CHANGE_DETECTED_REVIEW_REQUIRED",
+        "UNAVAILABLE_DRAFT_ONLY",
+        "STALE_DRAFT_ONLY"
+      ]
+    },
+    "limitations": {
+      "const": [
+        "UNCHANGED_BYTES_DO_NOT_PROVE_LEGAL_CURRENTNESS",
+        "PUBLISHER_AUTHORSHIP_AND_LEGAL_EFFECT_NOT_AUTHENTICATED",
+        "HISTORICAL_APPLICABILITY_NOT_VERIFIED"
+      ]
+    },
+    "check_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[A-Z][A-Z0-9_-]+$"
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "frozen_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fetch_id",
+        "record_snapshot_sha256",
+        "content_sha256",
+        "fetched_at",
+        "final_url"
+      ],
+      "properties": {
+        "fetch_id": {"type": "string", "pattern": "^FETCH-[A-Z0-9][A-Z0-9_-]{0,79}$"},
+        "record_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+        "content_sha256": {"$ref": "#/$defs/sha256"},
+        "fetched_at": {"type": "string", "format": "date-time"},
+        "final_url": {"type": "string", "pattern": "^https://", "maxLength": 2048}
+      }
+    }
+  }
+}

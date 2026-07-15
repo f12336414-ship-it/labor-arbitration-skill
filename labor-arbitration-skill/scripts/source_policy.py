@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 
 from finding_model import finding
 from integrity_primitives import is_rfc3339_datetime, is_sha256
+from source_registry import OFFICIAL_SOURCE_REGISTRY
 
 
 NORMATIVE_DOCUMENT_TYPES = {
@@ -34,12 +35,8 @@ REQUIRED_SOURCE_FIELDS = {
     "publisher_code",
 }
 OFFICIAL_SOURCE_CANDIDATE_HOSTS = {
-    "BEIJING_GOVERNMENT": {"www.beijing.gov.cn"},
-    "BEIJING_HRSS": {"rsj.beijing.gov.cn", "fuwu.rsj.beijing.gov.cn"},
-    "MOHRSS": {"www.mohrss.gov.cn"},
-    "NATIONAL_LAWS_REGULATIONS_DATABASE": {"flk.npc.gov.cn"},
-    "STATE_COUNCIL": {"www.gov.cn"},
-    "SUPREME_PEOPLES_COURT": {"www.court.gov.cn"},
+    publisher_code: set(entry["hosts"])
+    for publisher_code, entry in OFFICIAL_SOURCE_REGISTRY.items()
 }
 
 

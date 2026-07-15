@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a rule, claim, or calculator cross-validation review packet."""
+"""Validate an exact UTF-8 legal-source text diff record."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ SCRIPT_DIRECTORY = Path(__file__).resolve().parent
 if str(SCRIPT_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIRECTORY))
 
-from review_packet_policy import validate_review_packet  # noqa: E402
+from legal_text_diff import validate_legal_text_diff_record  # noqa: E402
 from bounded_json_input import (  # noqa: E402
     BoundedJsonInputError,
     load_bounded_json_object,
@@ -23,27 +23,22 @@ from validate_case_package import (  # noqa: E402
 )
 
 
-MAX_REVIEW_PACKET_BYTES = 2 * 1024 * 1024
+MAX_DIFF_BYTES = 4 * 1024 * 1024
 
 
 def main() -> int:
     configure_utf8_stdio()
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("review_packet", type=Path)
+    parser.add_argument("diff", type=Path)
     args = parser.parse_args()
-
     try:
-        packet = load_bounded_json_object(
-            args.review_packet,
-            MAX_REVIEW_PACKET_BYTES,
-            "REVIEW_PACKET_INPUT",
-            "Review packet",
+        record = load_bounded_json_object(
+            args.diff, MAX_DIFF_BYTES, "LEGAL_TEXT_DIFF_RECORD", "Diff record"
         )
     except BoundedJsonInputError as error:
         emit_input_error(error.code, str(error))
         return 1
-
-    report = validate_review_packet(packet)
+    report = validate_legal_text_diff_record(record)
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0 if report["allowed"] else 2
 

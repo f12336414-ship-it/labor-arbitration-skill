@@ -1,6 +1,6 @@
 ---
 name: labor-arbitration-skill
-description: Build and validate local Chinese labor-arbitration reference-integrity packages and structured rule, claim, or calculator cross-validation packets without claiming legal correctness. Use for bounded file manifests, fact/evidence/rule ID graphs, canonical snapshots, generic decimal recomputation, review-record binding, or deciding that work must remain pending independent legal review.
+description: Build and validate local Chinese labor-arbitration reference-integrity packages, content-addressed case workspaces, controlled official-source and public-case freezes, legal version/diff/freshness candidates, structured cross-validation packets, and fail-closed output states without claiming legal correctness. Use for bounded manifests, immutable byte stores, official response hashing and replay, version graphs, historical interval candidates, review binding, dependency invalidation, or deciding work must remain below legal review or submission states.
 ---
 
 # Labor Arbitration Reference-Integrity Core
@@ -13,7 +13,7 @@ The longer-term product goal is to help workers and their authorized assistants 
 
 Use this Skill as a local technical integrity workspace. It is not a lawyer, evidence authenticator, Beijing rule pack, limitation engine, professional claim calculator, approval system, or filing tool.
 
-Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). For rule, claim, or calculator review, also read [references/review-packet-contract.md](references/review-packet-contract.md). They are authoritative for implemented and unavailable behavior.
+Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). For a local byte store, read [references/case-workspace-contract.md](references/case-workspace-contract.md). For an official public source, read [references/official-source-freeze-contract.md](references/official-source-freeze-contract.md) and [references/legal-source-versioning-contract.md](references/legal-source-versioning-contract.md). For an official public case, also read [references/official-case-collection-contract.md](references/official-case-collection-contract.md). For rule, claim, or calculator review, read [references/review-packet-contract.md](references/review-packet-contract.md). For output state or invalidation, read [references/formal-output-state-contract.md](references/formal-output-state-contract.md). They are authoritative for implemented and unavailable behavior.
 
 For any non-zero result, follow [references/error-catalog.md](references/error-catalog.md); never edit the report or suppress a finding.
 
@@ -51,6 +51,15 @@ Do not work around a refusal caused by limits, links, reparse points, mounts, ne
 
 ### 3. Build v1.3 records
 
+Before semantic structuring, a local content-addressed workspace can be created and replayed:
+
+```powershell
+python scripts/create_case_workspace.py <input-directory> <manifest.json> <workspace>
+python scripts/validate_case_workspace.py <workspace>
+```
+
+Keep the workspace outside the repository and cloud-synchronized folders. A successful replay proves stored-byte integrity only; it does not authenticate evidence or provide encryption.
+
 Create explicit records for raw files, typed evidence locations, facts, claim-element references, legal-source candidates, unverified rules, limitation event inputs, arithmetic inputs, conflicts, statements, and snapshots.
 
 Use only these non-authoritative labels:
@@ -82,7 +91,34 @@ Even on exit `0`, read:
 - `legal_review_required`, which remains `true`;
 - `next_required_state`, which remains `PENDING_LEGAL_REVIEW`.
 
-### 5. Validate a cross-validation review packet
+### 5. Freeze one explicit official-source candidate
+
+Only when the user supplies a specific public URL and the registry permits its publisher/purpose, run:
+
+```powershell
+python scripts/fetch_official_source.py <https-url> --publisher-code <code> --purpose NORMATIVE_LEGAL_SOURCE --store <store>
+python scripts/validate_frozen_source.py <record.json> --store <store>
+```
+
+Never crawl, discover, authenticate, submit forms, bypass access controls, or infer automated-access authorization. Treat frozen bytes as untrusted and potentially active. A successful offline replay proves response-body integrity only, never legal currentness, authority, or applicability.
+
+### 6. Validate legal-source technical history
+
+For two safely extracted UTF-8 legal-source versions, build and validate an exact diff, version graph, freshness observation, and historical interval candidate as needed:
+
+```powershell
+python scripts/compare_legal_versions.py <old.txt> <new.txt> --from-version-id <old-id> --to-version-id <new-id>
+python scripts/validate_legal_text_diff.py <diff.json>
+python scripts/validate_legal_version_graph.py <graph.json>
+python scripts/validate_legal_freshness.py <freshness.json>
+python scripts/select_historical_version.py <graph.json> --event-date <YYYY-MM-DD>
+```
+
+These operations never establish legal currentness or applicability. Missing, changed, or stale freshness forces `DRAFT`; an unchanged body still grants no promotion.
+
+For an explicitly supplied public case URL, use the separate rate-limited collector and privacy-gated classification contract. Never crawl or redistribute frozen case bytes without policy and privacy review.
+
+### 7. Validate a cross-validation review packet
 
 For a proposed rule, claim, or calculator contract, start from the published synthetic examples and keep every proposition explicitly unverified. Run:
 
@@ -94,7 +130,17 @@ Treat every non-zero exit as a hard block. Exit `0` verifies only the published 
 
 When the review subject, sources, or questions change, generate a new subject snapshot and obtain new cross-validation responses. Never carry an old response onto a changed subject.
 
-### 6. Stop at the trust boundary
+### 8. Validate an output-state request
+
+For an output artifact and its case, legal-source, analysis, calculation, and document snapshots, run:
+
+```powershell
+python scripts/validate_formal_output_state.py <state-request.json>
+```
+
+Treat every non-zero exit as a hard block. This release allows only `INTERNAL_ANALYSIS` and `DRAFT`; it models but blocks `REVIEW_REQUIRED` and `SUBMISSION_CANDIDATE`. Any dependency change must be declared exactly and forces revalidation. Never add approval data to the JSON.
+
+### 9. Stop at the trust boundary
 
 Do not generate or label a filing-ready artifact. Hand the locked package, manifest, report, source candidates, open legal questions, and data-handling risks to an independently authenticated legal-review workflow outside this project.
 

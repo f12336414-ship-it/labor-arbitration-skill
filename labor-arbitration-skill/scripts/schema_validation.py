@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from pathlib import Path
 
 import jsonschema
@@ -14,8 +15,29 @@ REFERENCE_DIRECTORY = Path(__file__).resolve().parents[1] / "references"
 CASE_PACKAGE_SCHEMA_PATH = REFERENCE_DIRECTORY / "case-package.schema.json"
 INTAKE_MANIFEST_SCHEMA_PATH = REFERENCE_DIRECTORY / "intake-manifest.schema.json"
 REVIEW_PACKET_SCHEMA_PATH = REFERENCE_DIRECTORY / "review-packet.schema.json"
+FORMAL_OUTPUT_STATE_SCHEMA_PATH = (
+    REFERENCE_DIRECTORY / "formal-output-state.schema.json"
+)
+FROZEN_SOURCE_RECORD_SCHEMA_PATH = (
+    REFERENCE_DIRECTORY / "frozen-source-record.schema.json"
+)
+LEGAL_VERSION_GRAPH_SCHEMA_PATH = (
+    REFERENCE_DIRECTORY / "legal-version-graph.schema.json"
+)
+LEGAL_FRESHNESS_CHECK_SCHEMA_PATH = (
+    REFERENCE_DIRECTORY / "legal-freshness-check.schema.json"
+)
+LEGAL_TEXT_DIFF_SCHEMA_PATH = REFERENCE_DIRECTORY / "legal-text-diff.schema.json"
+HISTORICAL_VERSION_CANDIDATE_SCHEMA_PATH = (
+    REFERENCE_DIRECTORY / "historical-version-candidate.schema.json"
+)
+OFFICIAL_CASE_RECORD_SCHEMA_PATH = (
+    REFERENCE_DIRECTORY / "official-case-record.schema.json"
+)
+CASE_WORKSPACE_SCHEMA_PATH = REFERENCE_DIRECTORY / "case-workspace.schema.json"
 
 
+@lru_cache(maxsize=None)
 def _load_validator(path: Path):
     schema = json.loads(path.read_text(encoding="utf-8"))
     jsonschema.Draft202012Validator.check_schema(schema)
@@ -84,6 +106,174 @@ def validate_published_review_packet(packet: dict) -> list[dict]:
         code="REVIEW_PACKET_SCHEMA_VALIDATION_ERROR",
         prefix="",
         message="Review packet does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_formal_output_state(request: dict) -> list[dict]:
+    try:
+        validator = _load_validator(FORMAL_OUTPUT_STATE_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [
+            finding(
+                "OUTPUT_STATE_SCHEMA_UNAVAILABLE",
+                "$",
+                "The bundled formal-output-state v1.0 JSON Schema is unavailable or invalid.",
+                "P0",
+            )
+        ]
+    return _collect_errors(
+        validator,
+        request,
+        code="OUTPUT_STATE_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="State request does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_frozen_source_record(record: dict) -> list[dict]:
+    try:
+        validator = _load_validator(FROZEN_SOURCE_RECORD_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [
+            finding(
+                "FROZEN_SOURCE_SCHEMA_UNAVAILABLE",
+                "$",
+                "The bundled frozen-source-record v1.0 JSON Schema is unavailable or invalid.",
+                "P0",
+            )
+        ]
+    return _collect_errors(
+        validator,
+        record,
+        code="FROZEN_SOURCE_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Frozen-source record does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_legal_version_graph(graph: dict) -> list[dict]:
+    try:
+        validator = _load_validator(LEGAL_VERSION_GRAPH_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [
+            finding(
+                "LEGAL_VERSION_GRAPH_SCHEMA_UNAVAILABLE",
+                "$",
+                "The bundled legal-version-graph v1.0 JSON Schema is unavailable or invalid.",
+                "P0",
+            )
+        ]
+    return _collect_errors(
+        validator,
+        graph,
+        code="LEGAL_VERSION_GRAPH_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Version graph does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_legal_freshness_check(check: dict) -> list[dict]:
+    try:
+        validator = _load_validator(LEGAL_FRESHNESS_CHECK_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [
+            finding(
+                "LEGAL_FRESHNESS_SCHEMA_UNAVAILABLE",
+                "$",
+                "The bundled legal-freshness-check v1.0 JSON Schema is unavailable or invalid.",
+                "P0",
+            )
+        ]
+    return _collect_errors(
+        validator,
+        check,
+        code="LEGAL_FRESHNESS_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Freshness check does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_legal_text_diff(diff: dict) -> list[dict]:
+    try:
+        validator = _load_validator(LEGAL_TEXT_DIFF_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [
+            finding(
+                "LEGAL_TEXT_DIFF_SCHEMA_UNAVAILABLE",
+                "$",
+                "The bundled legal-text-diff v1.0 JSON Schema is unavailable or invalid.",
+                "P0",
+            )
+        ]
+    return _collect_errors(
+        validator,
+        diff,
+        code="LEGAL_TEXT_DIFF_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Legal text diff does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_historical_version_candidate(selection: dict) -> list[dict]:
+    try:
+        validator = _load_validator(HISTORICAL_VERSION_CANDIDATE_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [
+            finding(
+                "HISTORICAL_VERSION_SCHEMA_UNAVAILABLE",
+                "$",
+                "The bundled historical-version-candidate v1.0 JSON Schema is unavailable or invalid.",
+                "P0",
+            )
+        ]
+    return _collect_errors(
+        validator,
+        selection,
+        code="HISTORICAL_VERSION_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Historical selection does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_official_case_record(record: dict) -> list[dict]:
+    try:
+        validator = _load_validator(OFFICIAL_CASE_RECORD_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [
+            finding(
+                "OFFICIAL_CASE_SCHEMA_UNAVAILABLE",
+                "$",
+                "The bundled official-case-record v1.0 JSON Schema is unavailable or invalid.",
+                "P0",
+            )
+        ]
+    return _collect_errors(
+        validator,
+        record,
+        code="OFFICIAL_CASE_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Official case record does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_case_workspace(workspace: dict) -> list[dict]:
+    try:
+        validator = _load_validator(CASE_WORKSPACE_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [
+            finding(
+                "CASE_WORKSPACE_SCHEMA_UNAVAILABLE",
+                "$",
+                "The bundled case-workspace v1.0 JSON Schema is unavailable or invalid.",
+                "P0",
+            )
+        ]
+    return _collect_errors(
+        validator,
+        workspace,
+        code="CASE_WORKSPACE_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Case workspace does not conform to the published v1.0 JSON Schema.",
     )
 
 

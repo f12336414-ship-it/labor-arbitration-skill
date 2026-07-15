@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "request_id": "STATE-SYNTHETIC-INITIAL",
+  "artifact_id": "OUTPUT-SYNTHETIC-DIAGNOSTIC",
+  "artifact_type": "DIAGNOSTIC_REPORT",
+  "requested_state": "INTERNAL_ANALYSIS",
+  "generated_at": "2026-07-15T02:00:00Z",
+  "snapshot_canonicalization": "RFC8785",
+  "dependency_snapshots": {
+    "case_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "legal_sources_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "analysis_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    "calculations_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+    "document_sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+  },
+  "previous_binding": null,
+  "invalidation": {
+    "status": "NOT_APPLICABLE",
+    "changed_dependency_kinds": [],
+    "reason": "Synthetic first-state request has no prior binding."
+  },
+  "legal_freshness": {
+    "status": "NOT_CHECKED",
+    "check_id": null,
+    "check_snapshot_sha256": null
+  },
+  "approvals": [],
+  "limitations": [
+    "NO_LEGAL_CORRECTNESS_VERIFIED",
+    "NO_IDENTITY_OR_APPROVAL_AUTHENTICATED",
+    "NO_SUBMISSION_READINESS_GRANTED"
+  ],
+  "state_request_sha256": "29d0c293b76e27513be18918a05df1266ca955e66dbd6ea4391a5a026858c029"
+}
