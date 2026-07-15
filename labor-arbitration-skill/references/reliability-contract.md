@@ -37,6 +37,7 @@ Trusted implementation scope is limited to:
 - local content-addressed case-object creation and hash replay;
 - replayable structural-anchor fact candidates, direct-predecessor revision binding, and immutable invalidation records;
 - exact user-structured date/amount/subject conflict detection and registered-view dependency invalidation;
+- human-gated evidence assessment, proof-purpose binding, deterministic gap identification, and generic strengthening actions;
 - bounded official-source HTTPS transport evidence and response-body freezing;
 - structural legal-version graphs, exact UTF-8 text diffs, technical freshness bindings, and historical interval candidates;
 - RFC 8785 JSON canonicalization and hashing;
@@ -154,6 +155,8 @@ For conflict analysis, a local user may separately provide canonical dates, non-
 
 The project does not implement PDF parsing, OCR, image/chat/audio/video transcription, attachment recursion, operating-system parser sandboxing, page or timestamp existence checks, semantic value extraction, evidence ranking, authenticity analysis, semantic support scoring, proof-standard analysis, authenticated human identity, professional confirmation, or discovery of unregistered downstream copies. Current structural anchor replay therefore completes P1-07 but leaves P1-06 at `FOUNDATION`; deterministic conflicts complete P1-08, while end-to-end downstream dependency enforcement leaves P1-10 at `FOUNDATION`.
 
+A separate evidence-review ledger validates same-parser active candidates and selected structured views before recording a user's source, completeness, subject, time, original-byte/integrity and legality-risk assertions. Proof-purpose propositions remain user assertions. Open gaps deterministically generate generic preservation, provenance, context, identifier, time, transformation-chain, corroboration or independent-review actions. A fake corroborating review ID cannot close authenticity or legality gaps and is never verified for existence or independence. Authenticity remains `UNVERIFIED`, admissibility requires legal review, evidence weight is not assessed and output stays internal-only.
+
 ## 9. Claims, limitation, and conflicts
 
 Claim elements may record IDs and declared workflow fields. `initial_burden_status` must remain `UNVERIFIED`. The project has no authoritative claim-element catalog or burden engine.
@@ -164,7 +167,7 @@ Each claim carries a limitation data object, but it is data capture only:
 - `deadline_status=UNVERIFIED`;
 - `review_status=PENDING_LEGAL_REVIEW`.
 
-Legacy case-package conflict records, if present, must remain `PENDING_LEGAL_REVIEW`. The separate structured-fact ledger emits only `PENDING_HUMAN_REVIEW` comparison conflicts with null auto-selection and resolution fields. Neither mechanism resolves a conflict. The project has no remedy compatibility, inclusion, offset, alternative-claim, or duplicate-period matrix.
+Legacy case-package conflict records, if present, must remain `PENDING_LEGAL_REVIEW`. The separate structured-fact ledger emits only `PENDING_HUMAN_REVIEW` comparison conflicts with null auto-selection and resolution fields. Evidence review records bind proof purposes but cannot claim semantic relevance, corroboration, admissibility, proof strength or burden satisfaction. None of these mechanisms resolves a conflict. The project has no remedy compatibility, inclusion, offset, alternative-claim, or duplicate-period matrix.
 
 ## 10. Arithmetic
 

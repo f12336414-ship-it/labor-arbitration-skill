@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/evidence-review-record.schema.json",
+  "title": "Human-gated evidence review and strengthening record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "evidence_review_id", "review_artifact_id", "created_at", "clock_status", "actor_assertion", "actor_label", "evidence_binding", "evidence_type", "assessment", "proof_purposes", "corroborating_review_bindings", "identified_gaps", "strengthening_suggestions", "authenticity_status", "admissibility_status", "evidence_weight_status", "legality_review_status", "overall_status", "output_permission", "limitations", "record_snapshot_sha256"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "evidence_review_id": {"type": "string", "pattern": "^EVREVIEW-[0-9A-F]{24}$"},
+    "review_artifact_id": {"type": "string", "pattern": "^EVIDENCE-[A-Z0-9][A-Z0-9_-]{0,54}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "clock_status": {"const": "SYSTEM_CLOCK_UNATTESTED"},
+    "actor_assertion": {"const": "USER_EVIDENCE_REVIEW_UNAUTHENTICATED"},
+    "actor_label": {"type": "string", "minLength": 1, "maxLength": 128},
+    "evidence_binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workspace_id", "raw_id", "content_sha256", "parse_id", "parse_record_snapshot_sha256", "fact_candidate_bindings", "fact_analysis_id", "fact_analysis_snapshot_sha256"],
+      "properties": {
+        "workspace_id": {"type": "string", "pattern": "^WORKSPACE-[0-9A-F]{24}$"},
+        "raw_id": {"type": "string", "pattern": "^RAW-[0-9a-f]{64}$"},
+        "content_sha256": {"$ref": "#/$defs/sha256"},
+        "parse_id": {"type": "string", "pattern": "^PARSE-[0-9A-F]{24}$"},
+        "parse_record_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+        "fact_candidate_bindings": {
+          "type": "array", "minItems": 1, "maxItems": 100,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["fact_candidate_id", "record_snapshot_sha256", "provenance_state"],
+            "properties": {
+              "fact_candidate_id": {"type": "string", "pattern": "^FACT-[0-9A-F]{24}$"},
+              "record_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+              "provenance_state": {"enum": ["EXTRACTED", "USER_ANNOTATED", "ADJUDICATED"]}
+            }
+          }
+        },
+        "fact_analysis_id": {"type": "string", "pattern": "^FANALYSIS-[0-9A-F]{24}$"},
+        "fact_analysis_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "evidence_type": {"enum": ["TEXT", "TABLE", "DOCUMENT", "EMAIL", "ARCHIVE_ENTRY_LIST"]},
+    "assessment": {"$ref": "#/$defs/assessment"},
+    "proof_purposes": {
+      "type": "array", "minItems": 1, "maxItems": 100,
+      "items": {"$ref": "#/$defs/purpose"}
+    },
+    "corroborating_review_bindings": {
+      "type": "array", "maxItems": 100, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["evidence_review_id", "record_snapshot_sha256", "relationship_status"],
+        "properties": {
+          "evidence_review_id": {"type": "string", "pattern": "^EVREVIEW-[0-9A-F]{24}$"},
+          "record_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+          "relationship_status": {"const": "USER_DECLARED_CORROBORATION_UNVERIFIED"}
+        }
+      }
+    },
+    "identified_gaps": {"type": "array", "minItems": 2, "maxItems": 20, "uniqueItems": true, "items": {"$ref": "#/$defs/gap"}},
+    "strengthening_suggestions": {"type": "array", "minItems": 2, "maxItems": 20, "uniqueItems": true, "items": {"$ref": "#/$defs/suggestion"}},
+    "authenticity_status": {"const": "UNVERIFIED"},
+    "admissibility_status": {"const": "NOT_DETERMINED_REQUIRES_LEGAL_REVIEW"},
+    "evidence_weight_status": {"const": "NOT_ASSESSED"},
+    "legality_review_status": {"const": "PENDING_LEGAL_REVIEW"},
+    "overall_status": {"const": "GAPS_RECORDED_PENDING_HUMAN_AND_LEGAL_REVIEW"},
+    "output_permission": {"const": "INTERNAL_ANALYSIS_ONLY"},
+    "limitations": {
+      "const": [
+        "ASSESSMENT_IS_USER_SUPPLIED_UNAUTHENTICATED",
+        "AUTHENTICITY_ADMISSIBILITY_AND_WEIGHT_NOT_DETERMINED",
+        "PROOF_PURPOSE_DOES_NOT_ESTABLISH_RELEVANCE_OR_SUPPORT",
+        "CORROBORATION_BINDINGS_ARE_NOT_EXTERNALLY_VERIFIED",
+        "SUGGESTIONS_ARE_GENERIC_GAP_ACTIONS_NOT_LEGAL_ADVICE",
+        "NO_SUBMISSION_READINESS"
+      ]
+    },
+    "record_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "key": {"type": "string", "minLength": 3, "maxLength": 128, "pattern": "^[A-Z][A-Z0-9_.:-]+$"},
+    "assessment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_status", "completeness_status", "subject_link_status", "time_link_status", "integrity_status", "legality_risk_flags", "notes", "assessment_status"],
+      "properties": {
+        "source_status": {"enum": ["USER_PROVIDED_ASSERTED", "EMPLOYER_ISSUED_ASSERTED", "THIRD_PARTY_ISSUED_ASSERTED", "UNKNOWN"]},
+        "completeness_status": {"enum": ["COMPLETE_ASSERTED", "PARTIAL_ASSERTED", "UNKNOWN"]},
+        "subject_link_status": {"enum": ["MATCH_ASSERTED", "MISMATCH_ASSERTED", "UNKNOWN"]},
+        "time_link_status": {"enum": ["MATCH_ASSERTED", "MISMATCH_ASSERTED", "UNKNOWN"]},
+        "integrity_status": {"enum": ["ORIGINAL_BYTES_PRESERVED_ASSERTED", "TRANSFORMED_COPY_ASSERTED", "ALTERATION_CONCERN", "UNKNOWN"]},
+        "legality_risk_flags": {"type": "array", "minItems": 1, "maxItems": 10, "uniqueItems": true, "items": {"enum": ["NONE_DECLARED_UNVERIFIED", "UNKNOWN", "PRIVACY_OR_PERSONAL_INFORMATION", "RECORDING_CONSENT", "UNAUTHORIZED_ACCESS", "CONFIDENTIALITY_OR_TRADE_SECRET", "ALTERATION_OR_FABRICATION_CONCERN", "OTHER"]}},
+        "notes": {"type": "string", "maxLength": 2000},
+        "assessment_status": {"const": "USER_ASSESSED_UNAUTHENTICATED"}
+      }
+    },
+    "purpose": {
+      "type": "object", "additionalProperties": false,
+      "required": ["purpose_id", "purpose_key", "proposition", "view_bindings", "relationship_status", "purpose_snapshot_sha256"],
+      "properties": {
+        "purpose_id": {"type": "string", "pattern": "^PURPOSE-[0-9A-F]{24}$"},
+        "purpose_key": {"$ref": "#/$defs/key"},
+        "proposition": {"type": "string", "minLength": 1, "maxLength": 2000},
+        "view_bindings": {
+          "type": "array", "minItems": 1, "maxItems": 100,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["view_id", "view_snapshot_sha256", "fact_candidate_id", "fact_candidate_snapshot_sha256"],
+            "properties": {
+              "view_id": {"type": "string", "pattern": "^VIEW-[0-9A-F]{24}$"},
+              "view_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+              "fact_candidate_id": {"type": "string", "pattern": "^FACT-[0-9A-F]{24}$"},
+              "fact_candidate_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+            }
+          }
+        },
+        "relationship_status": {"const": "USER_ASSERTED_PROOF_PURPOSE_UNVERIFIED"},
+        "purpose_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "gap": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "status"],
+      "properties": {
+        "code": {"enum": ["AUTHENTICITY_UNVERIFIED", "LEGALITY_REVIEW_REQUIRED", "SOURCE_PROVENANCE_UNKNOWN", "COMPLETENESS_NOT_ASSERTED", "SUBJECT_LINK_NOT_ASSERTED", "SUBJECT_LINK_CONFLICT", "TIME_LINK_NOT_ASSERTED", "TIME_LINK_CONFLICT", "ORIGINAL_BYTES_PRESERVATION_NOT_ASSERTED", "INTEGRITY_CONCERN_FLAGGED", "NO_CORROBORATING_REVIEW_BOUND", "LEGALITY_RISK_UNKNOWN", "LEGALITY_RISK_FLAGGED"]},
+        "status": {"const": "OPEN"}
+      }
+    },
+    "suggestion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "action", "status"],
+      "properties": {
+        "code": {"enum": ["PRESERVE_AUTHENTICATION_MATERIAL", "OBTAIN_INDEPENDENT_LEGALITY_REVIEW", "DOCUMENT_SOURCE_PROVENANCE", "PRESERVE_COMPLETE_CONTEXT", "LINK_SUBJECT_IDENTIFIERS", "PRESERVE_TIME_METADATA", "PRESERVE_ORIGINAL_AND_TRANSFORMATION_CHAIN", "SEEK_INDEPENDENT_CORROBORATION"]},
+        "action": {"type": "string", "minLength": 1, "maxLength": 500},
+        "status": {"const": "GENERIC_ACTION_NOT_LEGAL_ADVICE"}
+      }
+    }
+  }
+}

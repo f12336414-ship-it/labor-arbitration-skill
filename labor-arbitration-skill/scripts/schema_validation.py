@@ -43,6 +43,8 @@ FACT_CANDIDATE_RECORD_SCHEMA_PATH = (
 )
 FACT_ANALYSIS_INPUT_SCHEMA_PATH = REFERENCE_DIRECTORY / "fact-analysis-input.schema.json"
 FACT_ANALYSIS_RECORD_SCHEMA_PATH = REFERENCE_DIRECTORY / "fact-analysis-record.schema.json"
+EVIDENCE_REVIEW_INPUT_SCHEMA_PATH = REFERENCE_DIRECTORY / "evidence-review-input.schema.json"
+EVIDENCE_REVIEW_RECORD_SCHEMA_PATH = REFERENCE_DIRECTORY / "evidence-review-record.schema.json"
 
 
 @lru_cache(maxsize=None)
@@ -353,6 +355,22 @@ def validate_published_fact_analysis_record(record: dict) -> list[dict]:
         prefix="",
         message="Fact analysis record does not conform to the published v1.0 JSON Schema.",
     )
+
+
+def validate_published_evidence_review_input(specification: dict) -> list[dict]:
+    try:
+        validator = _load_validator(EVIDENCE_REVIEW_INPUT_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [finding("EVIDENCE_REVIEW_INPUT_SCHEMA_UNAVAILABLE", "$", "The bundled evidence-review-input v1.0 JSON Schema is unavailable or invalid.", "P0")]
+    return _collect_errors(validator, specification, code="EVIDENCE_REVIEW_INPUT_SCHEMA_VALIDATION_ERROR", prefix="", message="Evidence review input does not conform to the published v1.0 JSON Schema.")
+
+
+def validate_published_evidence_review_record(record: dict) -> list[dict]:
+    try:
+        validator = _load_validator(EVIDENCE_REVIEW_RECORD_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [finding("EVIDENCE_REVIEW_SCHEMA_UNAVAILABLE", "$", "The bundled evidence-review-record v1.0 JSON Schema is unavailable or invalid.", "P0")]
+    return _collect_errors(validator, record, code="EVIDENCE_REVIEW_SCHEMA_VALIDATION_ERROR", prefix="", message="Evidence review record does not conform to the published v1.0 JSON Schema.")
 
 
 def _collect_errors(validator, value, *, code: str, prefix: str, message: str):
