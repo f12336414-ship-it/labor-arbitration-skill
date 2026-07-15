@@ -16,6 +16,56 @@ LIMITATIONS = [
     "PUBLISHER_AUTHORSHIP",
     "SOURCE_LEGAL_EFFECT",
 ]
+PUBLISHED_LIMITATIONS = [
+    "UNCHANGED_BYTES_DO_NOT_PROVE_LEGAL_CURRENTNESS",
+    "PUBLISHER_AUTHORSHIP_AND_LEGAL_EFFECT_NOT_AUTHENTICATED",
+    "HISTORICAL_APPLICABILITY_NOT_VERIFIED",
+]
+
+
+def frozen_binding(record: dict) -> dict:
+    return {
+        "fetch_id": record["fetch_id"],
+        "record_snapshot_sha256": record["record_snapshot_sha256"],
+        "content_sha256": record["content_sha256"],
+        "fetched_at": record["fetched_at"],
+        "final_url": record["final_url"],
+    }
+
+
+def build_legal_freshness_check(
+    *, document_id: str, publisher_code: str, baseline: dict,
+    observation: dict | None, checked_at: str, max_age_hours: int,
+) -> dict:
+    network_status = "SUCCESS" if observation is not None else "UNAVAILABLE"
+    check = {
+        "schema_version": "1.0",
+        "check_id": "FRESH-PLACEHOLDER",
+        "document_id": document_id,
+        "publisher_code": publisher_code,
+        "checked_at": checked_at,
+        "max_age_hours": max_age_hours,
+        "snapshot_canonicalization": "RFC8785",
+        "baseline": baseline,
+        "network_status": network_status,
+        "observation": observation,
+        "response_change": "UNKNOWN",
+        "technical_freshness_status": "UNAVAILABLE_DRAFT_ONLY",
+        "limitations": list(PUBLISHED_LIMITATIONS),
+        "check_snapshot_sha256": "0" * 64,
+    }
+    if is_rfc3339_datetime(checked_at) and (
+        observation is not None or network_status == "UNAVAILABLE"
+    ):
+        change, status = _expected_state(check)
+        check["response_change"] = change
+        check["technical_freshness_status"] = status
+    identity = calculate_json_snapshot(
+        {key: value for key, value in check.items() if key not in {"check_id", "check_snapshot_sha256"}}
+    )
+    check["check_id"] = f"FRESH-{identity[:24].upper()}"
+    check["check_snapshot_sha256"] = calculate_legal_freshness_snapshot(check)
+    return check
 
 
 def calculate_legal_freshness_snapshot(check: dict) -> str:

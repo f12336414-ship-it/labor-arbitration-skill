@@ -13,7 +13,7 @@ The longer-term product goal is to help workers and their authorized assistants 
 
 Use this Skill as a local technical integrity workspace. It is not a lawyer, evidence authenticator, Beijing rule pack, limitation engine, professional claim calculator, approval system, or filing tool.
 
-Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). For a local byte store, read [references/case-workspace-contract.md](references/case-workspace-contract.md). Before extraction, read [references/parser-boundary-contract.md](references/parser-boundary-contract.md); before labelling an extracted passage, also read [references/fact-candidate-contract.md](references/fact-candidate-contract.md); before structuring comparison values, read [references/fact-analysis-contract.md](references/fact-analysis-contract.md); before assessing evidence, read [references/evidence-review-contract.md](references/evidence-review-contract.md). For an official public source, read [references/official-source-freeze-contract.md](references/official-source-freeze-contract.md) and [references/legal-source-versioning-contract.md](references/legal-source-versioning-contract.md). For an official public case, also read [references/official-case-collection-contract.md](references/official-case-collection-contract.md). For rule, claim, or calculator review, read [references/review-packet-contract.md](references/review-packet-contract.md). For output state or invalidation, read [references/formal-output-state-contract.md](references/formal-output-state-contract.md). They are authoritative for implemented and unavailable behavior.
+Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). For a local byte store, read [references/case-workspace-contract.md](references/case-workspace-contract.md). Before extraction, read [references/parser-boundary-contract.md](references/parser-boundary-contract.md); before labelling an extracted passage, also read [references/fact-candidate-contract.md](references/fact-candidate-contract.md); before structuring comparison values, read [references/fact-analysis-contract.md](references/fact-analysis-contract.md); before assessing evidence, read [references/evidence-review-contract.md](references/evidence-review-contract.md). For an official public source, read [references/official-source-freeze-contract.md](references/official-source-freeze-contract.md), [references/legal-source-versioning-contract.md](references/legal-source-versioning-contract.md), and [references/legal-update-monitor-contract.md](references/legal-update-monitor-contract.md). For an official public case, also read [references/official-case-collection-contract.md](references/official-case-collection-contract.md). For rule, claim, or calculator review, read [references/review-packet-contract.md](references/review-packet-contract.md). For output state or invalidation, read [references/formal-output-state-contract.md](references/formal-output-state-contract.md). They are authoritative for implemented and unavailable behavior.
 
 For any non-zero result, follow [references/error-catalog.md](references/error-catalog.md); never edit the report or suppress a finding.
 
@@ -153,6 +153,17 @@ python scripts/select_historical_version.py <graph.json> --event-date <YYYY-MM-D
 ```
 
 These operations never establish legal currentness or applicability. Missing, changed, or stale freshness forces `DRAFT`; an unchanged body still grants no promotion.
+
+To derive a check only from offline-replayable frozen records, then compute due/missed states, alerts, and rolling error budgets:
+
+```powershell
+python scripts/build_legal_freshness.py <baseline-record.json> --store <store> --observation-record <observation-record.json> --document-id <id> --publisher-code <code> --checked-at <UTC-RFC3339> --max-age-hours <hours>
+python scripts/build_legal_monitor_definition.py <definition-input.json>
+python scripts/build_legal_monitor_run.py <run-input.json>
+python scripts/validate_legal_monitor_run.py <run.json> --definition <definition.json> [--previous-run <previous.json>]
+```
+
+An external scheduler must invoke the controlled fetch/freeze/check sequence. The monitor never proves scheduler liveness, clock trust, legal currentness, or alert delivery, and it never promotes a changed baseline automatically.
 
 For an explicitly supplied public case URL, use the separate rate-limited collector and privacy-gated classification contract. Never crawl or redistribute frozen case bytes without policy and privacy review.
 

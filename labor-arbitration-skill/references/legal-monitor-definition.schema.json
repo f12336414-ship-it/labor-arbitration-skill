@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/legal-monitor-definition.schema.json",
+  "title": "Locked legal update monitor definition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "definition_id", "monitor_id", "created_at", "owner_role", "sources", "limitations", "definition_snapshot_sha256"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "definition_id": {"type": "string", "pattern": "^LMDEF-[0-9A-F]{24}$"},
+    "monitor_id": {"type": "string", "pattern": "^LEGALMON-[A-Z0-9][A-Z0-9_-]{0,54}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "owner_role": {"enum": ["LEGAL_SOURCE_ADMIN", "PROJECT_MAINTAINER"]},
+    "sources": {
+      "type": "array", "minItems": 1, "maxItems": 100,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source_monitor_id", "document_id", "publisher_code", "canonical_url", "baseline", "interval_hours", "retry_interval_hours", "max_age_hours", "failure_window_runs", "max_failures_in_window", "urgency"],
+        "properties": {
+          "source_monitor_id": {"type": "string", "pattern": "^LSOURCE-[A-Z0-9][A-Z0-9_-]{0,54}$"},
+          "document_id": {"$ref": "#/$defs/identifier"},
+          "publisher_code": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+          "canonical_url": {"type": "string", "pattern": "^https://", "maxLength": 2048},
+          "baseline": {"$ref": "#/$defs/frozen_binding"},
+          "interval_hours": {"type": "integer", "minimum": 1, "maximum": 720},
+          "retry_interval_hours": {"type": "integer", "minimum": 1, "maximum": 720},
+          "max_age_hours": {"type": "integer", "minimum": 1, "maximum": 720},
+          "failure_window_runs": {"type": "integer", "minimum": 1, "maximum": 100},
+          "max_failures_in_window": {"type": "integer", "minimum": 0, "maximum": 99},
+          "urgency": {"enum": ["CRITICAL", "HIGH", "NORMAL"]}
+        }
+      }
+    },
+    "limitations": {
+      "const": [
+        "SCHEDULER_INVOCATION_IS_EXTERNAL",
+        "UNCHANGED_BYTES_DO_NOT_PROVE_LEGAL_CURRENTNESS",
+        "MONITORING_DOES_NOT_AUTHENTICATE_PUBLISHER_OR_LEGAL_EFFECT",
+        "ALERTS_REQUIRE_HUMAN_AND_LEGAL_REVIEW"
+      ]
+    },
+    "definition_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 3, "maxLength": 64, "pattern": "^[A-Z][A-Z0-9_-]+$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "frozen_binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["fetch_id", "record_snapshot_sha256", "content_sha256", "fetched_at", "final_url"],
+      "properties": {
+        "fetch_id": {"type": "string", "pattern": "^FETCH-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{16}$"},
+        "record_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+        "content_sha256": {"$ref": "#/$defs/sha256"},
+        "fetched_at": {"type": "string", "format": "date-time"},
+        "final_url": {"type": "string", "pattern": "^https://", "maxLength": 2048}
+      }
+    }
+  }
+}

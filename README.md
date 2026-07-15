@@ -137,11 +137,22 @@ python scripts/validate_legal_freshness.py <新鲜度.json>
 python scripts/select_historical_version.py <版本图.json> --event-date <YYYY-MM-DD>
 ```
 
+从已验证冻结记录构建检查，并计算定期到期、漏检、告警和滚动错误预算：
+
+```powershell
+python scripts/build_legal_freshness.py <基线记录.json> --store <存储目录> --observation-record <观察记录.json> --document-id <ID> --publisher-code <代码> --checked-at <UTC时间> --max-age-hours <小时>
+python scripts/build_legal_monitor_definition.py <监控定义输入.json>
+python scripts/build_legal_monitor_run.py <监控运行输入.json>
+python scripts/validate_legal_monitor_run.py <监控运行.json> --definition <定义.json> [--previous-run <前序运行.json>]
+```
+
+监控器本身不常驻联网：部署方的外部调度器负责触发受控抓取和告警投递。正文哈希未变只表示技术候选未变，不证明法律现行；变化、不可用、陈旧、漏检或错误预算耗尽一律强制草稿。
+
 退出码：`0` 表示所请求的技术状态通过；`2` 表示输入可解析但安全门禁阻断；`1` 表示输入损坏、超限或不可读。报告中的 `validation_scope.not_verified` 是必须继续人工或外部系统处理的能力。
 
 每条 finding 都带中文说明与修复动作；常见扫描、Schema、来源、日期和快照错误见[错误处理指南](labor-arbitration-skill/references/error-catalog.md)。
 
-[案件包 JSON Schema](labor-arbitration-skill/references/case-package.schema.json)与[intake manifest JSON Schema](labor-arbitration-skill/references/intake-manifest.schema.json)是 v1.3 结构契约；[本地工作区契约](labor-arbitration-skill/references/case-workspace-contract.md)定义内容寻址存储；[事实候选契约](labor-arbitration-skill/references/fact-candidate-contract.md)定义锚点重放、人工来源标签和失效修订；[结构化事实分析契约](labor-arbitration-skill/references/fact-analysis-contract.md)定义精确冲突和直接前序失效；[证据审核契约](labor-arbitration-skill/references/evidence-review-contract.md)定义人工评估、证明目的、缺口和通用补强动作；[法律版本与新鲜度契约](labor-arbitration-skill/references/legal-source-versioning-contract.md)定义版本图、差异、检查和历史候选；[审查包契约](labor-arbitration-skill/references/review-packet-contract.md)及其 [JSON Schema](labor-arbitration-skill/references/review-packet.schema.json)定义三类 v1.0 交叉验证对象；[正式输出状态契约](labor-arbitration-skill/references/formal-output-state-contract.md)定义技术状态和失效规则；全部[合成示例](examples/review-packets/synthetic-rule-review.json)均不含真实案件数据或真实法律结论。
+[案件包 JSON Schema](labor-arbitration-skill/references/case-package.schema.json)与[intake manifest JSON Schema](labor-arbitration-skill/references/intake-manifest.schema.json)是 v1.3 结构契约；[本地工作区契约](labor-arbitration-skill/references/case-workspace-contract.md)定义内容寻址存储；[事实候选契约](labor-arbitration-skill/references/fact-candidate-contract.md)定义锚点重放、人工来源标签和失效修订；[结构化事实分析契约](labor-arbitration-skill/references/fact-analysis-contract.md)定义精确冲突和直接前序失效；[证据审核契约](labor-arbitration-skill/references/evidence-review-contract.md)定义人工评估、证明目的、缺口和通用补强动作；[法律版本与新鲜度契约](labor-arbitration-skill/references/legal-source-versioning-contract.md)定义版本图、差异、检查和历史候选；[法律更新监控契约](labor-arbitration-skill/references/legal-update-monitor-contract.md)定义外部调度边界、到期/漏检、告警和错误预算；[审查包契约](labor-arbitration-skill/references/review-packet-contract.md)及其 [JSON Schema](labor-arbitration-skill/references/review-packet.schema.json)定义三类 v1.0 交叉验证对象；[正式输出状态契约](labor-arbitration-skill/references/formal-output-state-contract.md)定义技术状态和失效规则；全部[合成示例](examples/review-packets/synthetic-rule-review.json)均不含真实案件数据或真实法律结论。
 
 ## 状态流
 
@@ -175,6 +186,7 @@ flowchart LR
 - [正式输出状态与依赖失效契约](labor-arbitration-skill/references/formal-output-state-contract.md)
 - [官方来源单文档冻结契约](labor-arbitration-skill/references/official-source-freeze-contract.md)
 - [法律来源版本、差异与新鲜度技术契约](labor-arbitration-skill/references/legal-source-versioning-contract.md)
+- [法律更新监控与错误预算技术契约](labor-arbitration-skill/references/legal-update-monitor-contract.md)
 - [官方公开案例受控采集契约](labor-arbitration-skill/references/official-case-collection-contract.md)
 - [本地案件工作区契约](labor-arbitration-skill/references/case-workspace-contract.md)
 - [解析器边界契约](labor-arbitration-skill/references/parser-boundary-contract.md)

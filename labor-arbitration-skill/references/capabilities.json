@@ -128,12 +128,12 @@
       "guarantee": "Validates bounded candidate version graphs, internal references, acyclic amendment-like edges, exact UTF-8 source hashes, unnormalized line operations, complete non-truncated diff records, and RFC 8785 graph and diff snapshots.",
       "does_not_guarantee": "Correct extraction from HTML or PDF, legal correctness of a relationship, legal effect of a textual change, publisher authorship, or currentness."
     },
-    {
-      "id": "LEGAL_TECHNICAL_FRESHNESS_BINDING",
-      "status": "PARTIAL",
-      "guarantee": "Compares bound frozen response-body hashes, enforces a technical maximum age, records unavailable, changed, stale, or unchanged candidate status, and forces draft-only output on failure states.",
-      "does_not_guarantee": "Scheduled execution, alert delivery, legal currentness, completeness of all amending instruments, publisher authorship, or submission eligibility."
-    },
+      {
+        "id": "LEGAL_TECHNICAL_FRESHNESS_BINDING",
+        "status": "PARTIAL",
+        "guarantee": "Builds checks from offline-replayable frozen records, compares bound response-body hashes, enforces a technical maximum age, deterministically derives due, missed, unavailable, changed, stale, rolling error-budget and open human-alert states, and forces draft-only output on every failure state.",
+        "does_not_guarantee": "External scheduler invocation or liveness, alert delivery, trusted clock, legal currentness, completeness of all amending instruments, publisher authorship, or submission eligibility."
+      },
     {
       "id": "HISTORICAL_VERSION_INTERVAL_CANDIDATE",
       "status": "IMPLEMENTED",
