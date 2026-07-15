@@ -45,6 +45,10 @@ FACT_ANALYSIS_INPUT_SCHEMA_PATH = REFERENCE_DIRECTORY / "fact-analysis-input.sch
 FACT_ANALYSIS_RECORD_SCHEMA_PATH = REFERENCE_DIRECTORY / "fact-analysis-record.schema.json"
 EVIDENCE_REVIEW_INPUT_SCHEMA_PATH = REFERENCE_DIRECTORY / "evidence-review-input.schema.json"
 EVIDENCE_REVIEW_RECORD_SCHEMA_PATH = REFERENCE_DIRECTORY / "evidence-review-record.schema.json"
+LEGAL_MONITOR_DEFINITION_INPUT_SCHEMA_PATH = REFERENCE_DIRECTORY / "legal-monitor-definition-input.schema.json"
+LEGAL_MONITOR_DEFINITION_SCHEMA_PATH = REFERENCE_DIRECTORY / "legal-monitor-definition.schema.json"
+LEGAL_MONITOR_RUN_INPUT_SCHEMA_PATH = REFERENCE_DIRECTORY / "legal-monitor-run-input.schema.json"
+LEGAL_MONITOR_RUN_SCHEMA_PATH = REFERENCE_DIRECTORY / "legal-monitor-run.schema.json"
 
 
 @lru_cache(maxsize=None)
@@ -371,6 +375,30 @@ def validate_published_evidence_review_record(record: dict) -> list[dict]:
     except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
         return [finding("EVIDENCE_REVIEW_SCHEMA_UNAVAILABLE", "$", "The bundled evidence-review-record v1.0 JSON Schema is unavailable or invalid.", "P0")]
     return _collect_errors(validator, record, code="EVIDENCE_REVIEW_SCHEMA_VALIDATION_ERROR", prefix="", message="Evidence review record does not conform to the published v1.0 JSON Schema.")
+
+
+def _validate_monitor_schema(value, path, unavailable_code, validation_code, message):
+    try:
+        validator = _load_validator(path)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [finding(unavailable_code, "$", "The bundled legal-monitor v1.0 JSON Schema is unavailable or invalid.", "P0")]
+    return _collect_errors(validator, value, code=validation_code, prefix="", message=message)
+
+
+def validate_published_legal_monitor_definition_input(specification: dict) -> list[dict]:
+    return _validate_monitor_schema(specification, LEGAL_MONITOR_DEFINITION_INPUT_SCHEMA_PATH, "LEGAL_MONITOR_DEFINITION_INPUT_SCHEMA_UNAVAILABLE", "LEGAL_MONITOR_DEFINITION_INPUT_SCHEMA_VALIDATION_ERROR", "Legal monitor definition input does not conform to the published v1.0 JSON Schema.")
+
+
+def validate_published_legal_monitor_definition(definition: dict) -> list[dict]:
+    return _validate_monitor_schema(definition, LEGAL_MONITOR_DEFINITION_SCHEMA_PATH, "LEGAL_MONITOR_DEFINITION_SCHEMA_UNAVAILABLE", "LEGAL_MONITOR_DEFINITION_SCHEMA_VALIDATION_ERROR", "Legal monitor definition does not conform to the published v1.0 JSON Schema.")
+
+
+def validate_published_legal_monitor_run_input(specification: dict) -> list[dict]:
+    return _validate_monitor_schema(specification, LEGAL_MONITOR_RUN_INPUT_SCHEMA_PATH, "LEGAL_MONITOR_RUN_INPUT_SCHEMA_UNAVAILABLE", "LEGAL_MONITOR_RUN_INPUT_SCHEMA_VALIDATION_ERROR", "Legal monitor run input does not conform to the published v1.0 JSON Schema.")
+
+
+def validate_published_legal_monitor_run(record: dict) -> list[dict]:
+    return _validate_monitor_schema(record, LEGAL_MONITOR_RUN_SCHEMA_PATH, "LEGAL_MONITOR_RUN_SCHEMA_UNAVAILABLE", "LEGAL_MONITOR_RUN_SCHEMA_VALIDATION_ERROR", "Legal monitor run does not conform to the published v1.0 JSON Schema.")
 
 
 def _collect_errors(validator, value, *, code: str, prefix: str, message: str):

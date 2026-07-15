@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/legal-monitor-run-input.schema.json",
+  "title": "Legal update monitor run input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "evaluated_at", "definition", "previous_run", "freshness_checks"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "evaluated_at": {"type": "string", "format": "date-time"},
+    "definition": {"type": "object"},
+    "previous_run": {"type": ["object", "null"]},
+    "freshness_checks": {
+      "type": "array", "maxItems": 100,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source_monitor_id", "check"],
+        "properties": {
+          "source_monitor_id": {"type": "string", "pattern": "^LSOURCE-[A-Z0-9][A-Z0-9_-]{0,54}$"},
+          "check": {"type": "object"}
+        }
+      }
+    }
+  }
+}

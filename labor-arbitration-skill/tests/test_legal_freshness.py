@@ -14,9 +14,12 @@ if str(SCRIPT_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIRECTORY))
 
 from legal_freshness_policy import (  # noqa: E402
+    build_legal_freshness_check,
     calculate_legal_freshness_snapshot,
     validate_legal_freshness_check,
 )
+from frozen_source_store import freeze_fetched_source  # noqa: E402
+from source_fetch_policy import FetchedSource  # noqa: E402
 
 
 EXAMPLE_PATH = (
@@ -26,6 +29,7 @@ EXAMPLE_PATH = (
     / "synthetic-freshness-unchanged.json"
 )
 SCRIPT = SCRIPT_DIRECTORY / "validate_legal_freshness.py"
+BUILD_SCRIPT = SCRIPT_DIRECTORY / "build_legal_freshness.py"
 
 
 def load_example():
@@ -39,6 +43,34 @@ def lock(check):
 
 def finding_codes(check):
     return {item["code"] for item in validate_legal_freshness_check(check)["findings"]}
+
+
+def fetched(body):
+    url = "https://flk.npc.gov.cn/detail?id=synthetic"
+    return FetchedSource(
+        body=body,
+        final_url=url,
+        media_type="text/html",
+        network_hops=[
+            {
+                "url": url,
+                "status": 200,
+                "peer_ip": "93.184.216.34",
+                "tls_version": "TLSv1.3",
+                "tls_cipher": "TLS_AES_256_GCM_SHA384",
+                "peer_certificate_sha256": "a" * 64,
+                "redirect_location": None,
+            }
+        ],
+        response_headers={
+            "content_type": "text/html",
+            "content_length": str(len(body)),
+            "date": None,
+            "etag": None,
+            "last_modified": None,
+        },
+        status=200,
+    )
 
 
 class LegalFreshnessTests(unittest.TestCase):
@@ -89,6 +121,27 @@ class LegalFreshnessTests(unittest.TestCase):
 
         self.assertTrue(report["allowed"], report["findings"])
         self.assertEqual(report["required_output_state"], "DRAFT")
+
+    def test_builder_derives_unchanged_changed_and_unavailable_states(self):
+        template = load_example()
+        cases = [
+            (copy.deepcopy(template["observation"]), "UNCHANGED_RESPONSE_BODY_CANDIDATE"),
+            (copy.deepcopy(template["observation"]), "CHANGE_DETECTED_REVIEW_REQUIRED"),
+            (None, "UNAVAILABLE_DRAFT_ONLY"),
+        ]
+        cases[1][0]["content_sha256"] = "a" * 64
+        for observation, expected in cases:
+            check = build_legal_freshness_check(
+                document_id=template["document_id"],
+                publisher_code=template["publisher_code"],
+                baseline=copy.deepcopy(template["baseline"]),
+                observation=observation,
+                checked_at=template["checked_at"],
+                max_age_hours=template["max_age_hours"],
+            )
+            with self.subTest(expected=expected):
+                self.assertEqual(check["technical_freshness_status"], expected)
+                self.assertTrue(validate_legal_freshness_check(check)["allowed"])
 
     def test_stale_observation_requires_draft(self):
         check = load_example()
@@ -156,6 +209,60 @@ class LegalFreshnessTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertFalse(json.loads(result.stdout)["submission_ready"])
+
+    def test_build_cli_uses_replayable_frozen_records_and_handles_unavailable(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            baseline_path, _baseline = freeze_fetched_source(
+                root,
+                requested_url="https://flk.npc.gov.cn/detail?id=synthetic",
+                publisher_code="NATIONAL_LAWS_REGULATIONS_DATABASE",
+                purpose="NORMATIVE_LEGAL_SOURCE",
+                fetched=fetched(b"same legal source bytes"),
+                fetched_at="2026-07-14T03:00:00Z",
+            )
+            observation_path, _observation = freeze_fetched_source(
+                root,
+                requested_url="https://flk.npc.gov.cn/detail?id=synthetic",
+                publisher_code="NATIONAL_LAWS_REGULATIONS_DATABASE",
+                purpose="NORMATIVE_LEGAL_SOURCE",
+                fetched=fetched(b"same legal source bytes"),
+                fetched_at="2026-07-15T02:59:00Z",
+            )
+            common = [
+                sys.executable,
+                str(BUILD_SCRIPT),
+                str(baseline_path),
+                "--store",
+                str(root),
+                "--document-id",
+                "SYNTHETIC_WAGE_RULE",
+                "--publisher-code",
+                "NATIONAL_LAWS_REGULATIONS_DATABASE",
+                "--checked-at",
+                "2026-07-15T03:00:00Z",
+                "--max-age-hours",
+                "24",
+            ]
+            unchanged = subprocess.run(
+                [*common, "--observation-record", str(observation_path)],
+                cwd=SKILL_ROOT,
+                capture_output=True,
+                encoding="utf-8",
+                check=False,
+            )
+            unavailable = subprocess.run(
+                [*common, "--unavailable"],
+                cwd=SKILL_ROOT,
+                capture_output=True,
+                encoding="utf-8",
+                check=False,
+            )
+
+        self.assertEqual(unchanged.returncode, 0, unchanged.stdout + unchanged.stderr)
+        self.assertEqual(json.loads(unchanged.stdout)["technical_freshness_status"], "UNCHANGED_RESPONSE_BODY_CANDIDATE")
+        self.assertEqual(unavailable.returncode, 0, unavailable.stdout + unavailable.stderr)
+        self.assertEqual(json.loads(unavailable.stdout)["technical_freshness_status"], "UNAVAILABLE_DRAFT_ONLY")
 
     def test_cli_rejects_duplicate_keys(self):
         result = self.run_cli('{"schema_version":"1.0","schema_version":"1.0"}')
