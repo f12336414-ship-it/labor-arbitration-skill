@@ -45,6 +45,12 @@
       "does_not_guarantee": "An operating-system sandbox, malware freedom, evidence authenticity, visual rendering equivalence, legal relevance, semantic support, or safety of future third-party parser engines."
     },
     {
+      "id": "HUMAN_GATED_FACT_CANDIDATE_LEDGER",
+      "status": "IMPLEMENTED",
+      "guarantee": "Binds EXTRACTED, USER_ANNOTATED and narrowly defined ADJUDICATED provenance candidates to an exact parser record and replayable structural anchors, records self-declared unauthenticated actors, permits only explicit predecessor-bound transitions, and creates immutable invalidation revisions.",
+      "does_not_guarantee": "Actor identity, evidence authenticity, fact truth, legal relevance, adjudicative-document authenticity or effect, tribunal findings, downstream mapping, professional review, or submission readiness."
+    },
+    {
       "id": "PACKAGE_STRUCTURE_VALIDATION",
       "status": "IMPLEMENTED",
       "guarantee": "Checks required v1.3 fields, supported values, bounded JSON input, and deterministic error output.",
@@ -83,8 +89,8 @@
     {
       "id": "EVIDENCE_LOCATION_METADATA",
       "status": "PARTIAL",
-      "guarantee": "Requires a typed, non-empty location and a reference to an observed raw file.",
-      "does_not_guarantee": "That the location exists, the cited passage was extracted correctly, or the evidence supports the fact."
+      "guarantee": "Requires a typed non-empty case-package location; separately replays supported text, CSV/XLSX cell, DOCX paragraph, email and archive-entry fact-candidate anchors against exact parser snapshots.",
+      "does_not_guarantee": "PDF/image page, OCR box, chat-message identity, audio/video timepoint coverage, visual rendering equivalence, evidence authenticity, or semantic support."
     },
     {
       "id": "LIMITATION_DATA_CAPTURE",

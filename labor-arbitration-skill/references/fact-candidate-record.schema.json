@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/fact-candidate-record.schema.json",
+  "title": "Human-gated fact candidate record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "fact_candidate_id", "created_at", "clock_status",
+    "parse_binding", "provenance_state", "assertion", "anchor_bindings",
+    "review", "adjudicative_context", "truth_status", "candidate_status",
+    "invalidation", "revision", "limitations", "record_snapshot_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "fact_candidate_id": {"type": "string", "pattern": "^FACT-[0-9A-F]{24}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "clock_status": {"const": "SYSTEM_CLOCK_UNATTESTED"},
+    "parse_binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["parse_id", "parse_record_snapshot_sha256", "workspace_id", "raw_id", "content_sha256"],
+      "properties": {
+        "parse_id": {"type": "string", "pattern": "^PARSE-[0-9A-F]{24}$"},
+        "parse_record_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+        "workspace_id": {"type": "string", "pattern": "^WORKSPACE-[0-9A-F]{24}$"},
+        "raw_id": {"type": "string", "pattern": "^RAW-[0-9a-f]{64}$"},
+        "content_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "provenance_state": {"enum": ["EXTRACTED", "USER_ANNOTATED", "ADJUDICATED"]},
+    "assertion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["claim_type", "text", "text_sha256"],
+      "properties": {
+        "claim_type": {"enum": ["EMPLOYMENT_DATE", "WAGE_AMOUNT", "PAYMENT_DATE", "WORK_TIME", "WORK_LOCATION", "PARTY_IDENTITY", "TERMINATION_EVENT", "OTHER_OR_UNDETERMINED"]},
+        "text": {"type": "string", "minLength": 1, "maxLength": 10000},
+        "text_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "anchor_bindings": {
+      "type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["anchor_id", "kind", "coordinate", "text_sha256"],
+        "properties": {
+          "anchor_id": {"type": "string", "pattern": "^ANCHOR-[0-9A-F]{24}$"},
+          "kind": {"enum": ["TEXT_LINE", "CSV_CELL", "DOCX_PARAGRAPH", "XLSX_CELL", "EMAIL_HEADER", "EMAIL_TEXT_LINE", "ARCHIVE_ENTRY"]},
+          "coordinate": {"type": "string", "minLength": 1, "maxLength": 1024},
+          "text_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["actor_assertion", "actor_label", "confirmation_status", "reviewed_at"],
+      "properties": {
+        "actor_assertion": {"enum": ["MACHINE_EXTRACTION", "USER_SELF_DECLARED_UNAUTHENTICATED", "ADJUDICATIVE_DOCUMENT_TRANSCRIPTION_UNVERIFIED"]},
+        "actor_label": {"type": ["string", "null"], "minLength": 1, "maxLength": 128},
+        "confirmation_status": {"enum": ["NOT_HUMAN_CONFIRMED", "USER_CONFIRMED_UNAUTHENTICATED", "DOCUMENT_PASSAGE_CLASSIFIED_UNAUTHENTICATED"]},
+        "reviewed_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "adjudicative_context": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["document_kind", "document_reference", "passage_role", "document_authenticity_status", "legal_effect_status"],
+          "properties": {
+            "document_kind": {"enum": ["ARBITRATION_AWARD", "COURT_JUDGMENT", "COURT_RULING", "OTHER_ADJUDICATIVE_DOCUMENT"]},
+            "document_reference": {"type": "string", "minLength": 1, "maxLength": 256},
+            "passage_role": {"const": "CANDIDATE_ADJUDICATIVE_STATEMENT"},
+            "document_authenticity_status": {"const": "UNVERIFIED"},
+            "legal_effect_status": {"const": "UNVERIFIED"}
+          }
+        }
+      ]
+    },
+    "truth_status": {"enum": ["UNVERIFIED", "DISPUTED"]},
+    "candidate_status": {"enum": ["ACTIVE", "INVALIDATED"]},
+    "invalidation": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["reason_code", "reason", "invalidated_at", "actor_label"],
+          "properties": {
+            "reason_code": {"enum": ["SOURCE_CHANGED", "ANCHOR_MISSING", "USER_RETRACTED", "SUPERSEDED", "OTHER"]},
+            "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+            "invalidated_at": {"type": "string", "format": "date-time"},
+            "actor_label": {"type": "string", "minLength": 1, "maxLength": 128}
+          }
+        }
+      ]
+    },
+    "revision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["revision_number", "transition", "previous_fact_candidate_id", "previous_record_snapshot_sha256"],
+      "properties": {
+        "revision_number": {"type": "integer", "minimum": 1},
+        "transition": {"enum": ["CREATED", "USER_ANNOTATED", "ADJUDICATIVE_DOCUMENT_TRANSCRIBED", "INVALIDATED"]},
+        "previous_fact_candidate_id": {"type": ["string", "null"], "pattern": "^FACT-[0-9A-F]{24}$"},
+        "previous_record_snapshot_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "limitations": {
+      "const": [
+        "CANDIDATE_IS_NOT_ESTABLISHED_FACT",
+        "ACTOR_IDENTITY_IS_NOT_AUTHENTICATED",
+        "ADJUDICATED_MEANS_PASSAGE_CLASSIFICATION_NOT_TRIBUNAL_AUTHENTICATION",
+        "ANCHOR_BINDING_DOES_NOT_PROVE_EVIDENCE_AUTHENTICITY",
+        "LEGAL_RELEVANCE_AND_EFFECT_REQUIRE_INDEPENDENT_REVIEW"
+      ]
+    },
+    "record_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

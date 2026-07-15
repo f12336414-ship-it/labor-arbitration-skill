@@ -38,6 +38,9 @@ CASE_WORKSPACE_SCHEMA_PATH = REFERENCE_DIRECTORY / "case-workspace.schema.json"
 PARSER_EXTRACTION_RECORD_SCHEMA_PATH = (
     REFERENCE_DIRECTORY / "parser-extraction-record.schema.json"
 )
+FACT_CANDIDATE_RECORD_SCHEMA_PATH = (
+    REFERENCE_DIRECTORY / "fact-candidate-record.schema.json"
+)
 
 
 @lru_cache(maxsize=None)
@@ -298,6 +301,27 @@ def validate_published_parser_extraction_record(record: dict) -> list[dict]:
         code="PARSER_EXTRACTION_SCHEMA_VALIDATION_ERROR",
         prefix="",
         message="Parser extraction record does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_fact_candidate_record(record: dict) -> list[dict]:
+    try:
+        validator = _load_validator(FACT_CANDIDATE_RECORD_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [
+            finding(
+                "FACT_CANDIDATE_SCHEMA_UNAVAILABLE",
+                "$",
+                "The bundled fact-candidate-record v1.0 JSON Schema is unavailable or invalid.",
+                "P0",
+            )
+        ]
+    return _collect_errors(
+        validator,
+        record,
+        code="FACT_CANDIDATE_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Fact candidate record does not conform to the published v1.0 JSON Schema.",
     )
 
 

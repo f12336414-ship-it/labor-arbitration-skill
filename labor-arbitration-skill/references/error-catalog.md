@@ -11,6 +11,10 @@
 | `PARSER_ARCHIVE_*` / `PARSER_XML_*` | 压缩包路径、体积、压缩比、链接、加密或 XML 主动声明不安全 | 在独立受控环境转换为简单格式后重新登记原始字节与转换结果 |
 | `PARSER_OOXML_*` | Office 文件含宏、外链、嵌入对象或无效关系 | 删除主动内容需由用户在副本中明确完成；原件必须保留且不得执行 |
 | `PARSER_PDF_ADAPTER_NOT_IMPLEMENTED` / `PARSER_IMAGE_OCR_NOT_IMPLEMENTED` | 当前隔离等级未批准 PDF/OCR 引擎 | 保持拒绝，等待 P6-03 沙箱和受审引擎，不得把二进制当作文本 |
+| `FACT_ANCHOR_*` / `FACT_PARSE_BINDING_MISMATCH` | 事实候选无法对绑定的解析记录、原始对象、坐标或文本哈希重放 | 保留原记录，重新解析原始对象并创建新候选；不得手改锚点或沿用旧确认 |
+| `FACT_PREVIOUS_RECORD_*` / `FACT_TRANSITION_*` | 人工标注或失效修订缺少准确前序快照、时间回退或状态转换不合法 | 提供未改动的直接前序记录；从活动 `EXTRACTED` 记录重新派生，不得原地改状态 |
+| `FACT_STATE_*` / `FACT_EXACT_*` / `FACT_ADJUDICATIVE_*` | 来源状态、人员自声明、原文或裁判类文书上下文不一致 | 保持候选为未验证；逐字重放原锚点并重新记录自声明，禁止解释为事实真值或裁判认证 |
+| `FACT_ID_*` / `FACT_SNAPSHOT_*` / `FACT_ASSERTION_*` | 候选 ID、RFC 8785 快照或陈述文本摘要失效 | 从有效解析记录与前序记录重建新修订；不得覆盖原历史记录 |
 | `INTAKE_MANIFEST_*` | manifest Schema、自哈希或案件包绑定失败 | 从原始目录重新生成 manifest，并按顺序重算 intake/package/state 摘要 |
 | `SOURCE_HOST_NOT_ALLOWLISTED` | URL 主机与声明发布者不匹配 | 修正 publisher code/URL，并在外部法律流程独立核验来源 |
 | `SOURCE_HASH_STATUS_INVALID` | JSON 试图声称当前没有的抓取/哈希证明 | 保持 `DECLARED_UNVERIFIED`；不得通过改名冒充已验证 |

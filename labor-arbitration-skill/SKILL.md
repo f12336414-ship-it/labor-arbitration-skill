@@ -1,6 +1,6 @@
 ---
 name: labor-arbitration-skill
-description: Build and validate local Chinese labor-arbitration reference-integrity packages, content-addressed case workspaces, bounded inert extraction candidates, controlled official-source and public-case freezes, legal version/diff/freshness candidates, structured cross-validation packets, and fail-closed output states without claiming legal correctness. Use for bounded manifests, immutable byte stores, isolated text/CSV/DOCX/XLSX/email/archive parsing, official response hashing and replay, version graphs, historical interval candidates, review binding, dependency invalidation, or deciding work must remain below legal review or submission states.
+description: Build and validate local Chinese labor-arbitration reference-integrity packages, content-addressed case workspaces, bounded inert extraction candidates, replayable human-gated fact candidates, controlled official-source and public-case freezes, legal version/diff/freshness candidates, structured cross-validation packets, and fail-closed output states without claiming legal correctness. Use for bounded manifests, immutable byte stores, isolated text/CSV/DOCX/XLSX/email/archive parsing, fact provenance and immutable invalidation, official response hashing and replay, version graphs, review binding, or deciding work must remain below legal review or submission states.
 ---
 
 # Labor Arbitration Reference-Integrity Core
@@ -13,7 +13,7 @@ The longer-term product goal is to help workers and their authorized assistants 
 
 Use this Skill as a local technical integrity workspace. It is not a lawyer, evidence authenticator, Beijing rule pack, limitation engine, professional claim calculator, approval system, or filing tool.
 
-Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). For a local byte store, read [references/case-workspace-contract.md](references/case-workspace-contract.md). Before extraction, read [references/parser-boundary-contract.md](references/parser-boundary-contract.md). For an official public source, read [references/official-source-freeze-contract.md](references/official-source-freeze-contract.md) and [references/legal-source-versioning-contract.md](references/legal-source-versioning-contract.md). For an official public case, also read [references/official-case-collection-contract.md](references/official-case-collection-contract.md). For rule, claim, or calculator review, read [references/review-packet-contract.md](references/review-packet-contract.md). For output state or invalidation, read [references/formal-output-state-contract.md](references/formal-output-state-contract.md). They are authoritative for implemented and unavailable behavior.
+Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). For a local byte store, read [references/case-workspace-contract.md](references/case-workspace-contract.md). Before extraction, read [references/parser-boundary-contract.md](references/parser-boundary-contract.md); before labelling an extracted passage, also read [references/fact-candidate-contract.md](references/fact-candidate-contract.md). For an official public source, read [references/official-source-freeze-contract.md](references/official-source-freeze-contract.md) and [references/legal-source-versioning-contract.md](references/legal-source-versioning-contract.md). For an official public case, also read [references/official-case-collection-contract.md](references/official-case-collection-contract.md). For rule, claim, or calculator review, read [references/review-packet-contract.md](references/review-packet-contract.md). For output state or invalidation, read [references/formal-output-state-contract.md](references/formal-output-state-contract.md). They are authoritative for implemented and unavailable behavior.
 
 For any non-zero result, follow [references/error-catalog.md](references/error-catalog.md); never edit the report or suppress a finding.
 
@@ -68,6 +68,17 @@ python scripts/validate_parser_extraction.py <parse-record.json>
 ```
 
 DOCX/XLSX macros or external relationships, unsafe archives, active XML declarations, malformed containers, resource-limit breaches, PDF, and images are hard refusals. Formula source is never evaluated. Success still requires human anchor confirmation and proves neither visual location nor legal support. The child-process boundary is not an operating-system sandbox.
+
+Create an exact machine candidate, then optionally derive one human-labelled revision:
+
+```powershell
+python scripts/build_fact_candidate.py <parse-record.json> --anchor-id <id> --state EXTRACTED --claim-type <type> --assertion <exact-anchor-text> --created-at <UTC-RFC3339>
+python scripts/build_fact_candidate.py <parse-record.json> --anchor-id <id> --state USER_ANNOTATED --claim-type <type> --assertion <user-text> --actor-label <local-label> --previous-record <extracted.json> --created-at <UTC-RFC3339>
+python scripts/validate_fact_candidate.py <fact.json> --parse-record <parse-record.json> [--previous-record <previous.json>]
+python scripts/invalidate_fact_candidate.py <fact.json> --parse-record <parse-record.json> --reason-code <code> --reason <text> --actor-label <local-label> --created-at <UTC-RFC3339>
+```
+
+`EXTRACTED`, `USER_ANNOTATED`, and `ADJUDICATED` are provenance labels only. `ADJUDICATED` means an unauthenticated user classified one exact passage from a purported adjudicative document; it never means the document, legal effect, tribunal finding, or fact was verified. Never map these records automatically into case facts, claims, calculations, or formal documents.
 
 Create explicit records for raw files, typed evidence locations, facts, claim-element references, legal-source candidates, unverified rules, limitation event inputs, arithmetic inputs, conflicts, statements, and snapshots.
 
