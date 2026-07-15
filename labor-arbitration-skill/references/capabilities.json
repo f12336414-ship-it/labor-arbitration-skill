@@ -51,6 +51,12 @@
       "does_not_guarantee": "Actor identity, evidence authenticity, fact truth, legal relevance, adjudicative-document authenticity or effect, tribunal findings, downstream mapping, professional review, or submission readiness."
     },
     {
+      "id": "DETERMINISTIC_FACT_CONFLICT_AND_INVALIDATION_LEDGER",
+      "status": "IMPLEMENTED",
+      "guarantee": "Validates active fact candidates before binding user-supplied canonical dates, CNY amounts and opaque subject keys; deterministically emits every type/value/timeline conflict without choosing a winner; and invalidates a direct-predecessor analysis when any registered view or candidate snapshot changes.",
+      "does_not_guarantee": "Semantic extraction, actor identity, value or fact truth, evidence strength, subject-to-legal-entity matching, legal relevance, conflict resolution, discovery of unregistered downstream copies, or submission readiness."
+    },
+    {
       "id": "PACKAGE_STRUCTURE_VALIDATION",
       "status": "IMPLEMENTED",
       "guarantee": "Checks required v1.3 fields, supported values, bounded JSON input, and deterministic error output.",

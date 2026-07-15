@@ -41,6 +41,8 @@ PARSER_EXTRACTION_RECORD_SCHEMA_PATH = (
 FACT_CANDIDATE_RECORD_SCHEMA_PATH = (
     REFERENCE_DIRECTORY / "fact-candidate-record.schema.json"
 )
+FACT_ANALYSIS_INPUT_SCHEMA_PATH = REFERENCE_DIRECTORY / "fact-analysis-input.schema.json"
+FACT_ANALYSIS_RECORD_SCHEMA_PATH = REFERENCE_DIRECTORY / "fact-analysis-record.schema.json"
 
 
 @lru_cache(maxsize=None)
@@ -322,6 +324,34 @@ def validate_published_fact_candidate_record(record: dict) -> list[dict]:
         code="FACT_CANDIDATE_SCHEMA_VALIDATION_ERROR",
         prefix="",
         message="Fact candidate record does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_fact_analysis_input(specification: dict) -> list[dict]:
+    try:
+        validator = _load_validator(FACT_ANALYSIS_INPUT_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [finding("FACT_ANALYSIS_INPUT_SCHEMA_UNAVAILABLE", "$", "The bundled fact-analysis-input v1.0 JSON Schema is unavailable or invalid.", "P0")]
+    return _collect_errors(
+        validator,
+        specification,
+        code="FACT_ANALYSIS_INPUT_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Fact analysis input does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_fact_analysis_record(record: dict) -> list[dict]:
+    try:
+        validator = _load_validator(FACT_ANALYSIS_RECORD_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [finding("FACT_ANALYSIS_SCHEMA_UNAVAILABLE", "$", "The bundled fact-analysis-record v1.0 JSON Schema is unavailable or invalid.", "P0")]
+    return _collect_errors(
+        validator,
+        record,
+        code="FACT_ANALYSIS_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Fact analysis record does not conform to the published v1.0 JSON Schema.",
     )
 
 

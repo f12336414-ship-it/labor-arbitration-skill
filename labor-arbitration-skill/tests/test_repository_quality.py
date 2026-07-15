@@ -41,6 +41,7 @@ class RepositoryQualityTests(unittest.TestCase):
         for script_name in (
             "build_intake_manifest.py",
             "build_fact_candidate.py",
+            "build_fact_analysis.py",
             "build_official_case_record.py",
             "compare_legal_versions.py",
             "create_case_workspace.py",
@@ -52,6 +53,7 @@ class RepositoryQualityTests(unittest.TestCase):
             "validate_case_workspace.py",
             "validate_formal_output_state.py",
             "validate_fact_candidate.py",
+            "validate_fact_analysis.py",
             "validate_frozen_source.py",
             "validate_historical_version.py",
             "validate_legal_freshness.py",

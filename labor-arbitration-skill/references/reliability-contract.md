@@ -36,6 +36,7 @@ Trusted implementation scope is limited to:
 - bounded traversal and hashing of stable opened regular files;
 - local content-addressed case-object creation and hash replay;
 - replayable structural-anchor fact candidates, direct-predecessor revision binding, and immutable invalidation records;
+- exact user-structured date/amount/subject conflict detection and registered-view dependency invalidation;
 - bounded official-source HTTPS transport evidence and response-body freezing;
 - structural legal-version graphs, exact UTF-8 text diffs, technical freshness bindings, and historical interval candidates;
 - RFC 8785 JSON canonicalization and hashing;
@@ -149,7 +150,9 @@ Allowed fact states are `USER_ASSERTED`, `EVIDENCE_LINKED`, `DISPUTED`, and `UNK
 
 The project implements bounded inert extraction candidates for UTF-8 text, CSV, DOCX, XLSX and plain-text email plus non-recursive ZIP entry inspection. A separate fact-candidate ledger replays supported structural anchors and records three provenance labels: `EXTRACTED` is one exact machine-copied anchor; `USER_ANNOTATED` is a self-declared unauthenticated local user's statement; `ADJUDICATED` is only a self-declared unauthenticated classification of one exact passage from a purported adjudicative document. The last label does not authenticate the document, its legal effect, a tribunal finding, or the asserted fact. Derived records bind their direct predecessor and invalidation creates a new revision rather than deleting history. No fact candidate automatically enters a case fact, claim, calculation, or formal document.
 
-The project does not implement PDF parsing, OCR, image/chat/audio/video transcription, attachment recursion, operating-system parser sandboxing, page or timestamp existence checks, contradiction detection, authenticity analysis, semantic support scoring, proof-standard analysis, authenticated human identity, or professional confirmation. Current structural anchor replay therefore completes P1-07 but leaves P1-06 at `FOUNDATION`.
+For conflict analysis, a local user may separately provide canonical dates, non-negative CNY values or opaque subject keys bound to active fact-candidate snapshots. Engine `STRUCTURED_FACT_CONFLICTS/1.0.0` reports every exact unequal pair, semantic-kind mismatch, reversed employment boundary and termination outside a declared employment boundary. It never chooses a value or resolves a conflict. Its direct-predecessor ledger invalidates registered downstream analysis when a view or candidate snapshot is added, removed or changed, including a candidate snapshot change with the same value.
+
+The project does not implement PDF parsing, OCR, image/chat/audio/video transcription, attachment recursion, operating-system parser sandboxing, page or timestamp existence checks, semantic value extraction, evidence ranking, authenticity analysis, semantic support scoring, proof-standard analysis, authenticated human identity, professional confirmation, or discovery of unregistered downstream copies. Current structural anchor replay therefore completes P1-07 but leaves P1-06 at `FOUNDATION`; deterministic conflicts complete P1-08, while end-to-end downstream dependency enforcement leaves P1-10 at `FOUNDATION`.
 
 ## 9. Claims, limitation, and conflicts
 
@@ -161,7 +164,7 @@ Each claim carries a limitation data object, but it is data capture only:
 - `deadline_status=UNVERIFIED`;
 - `review_status=PENDING_LEGAL_REVIEW`.
 
-Conflict records, if present, must remain `PENDING_LEGAL_REVIEW`. The project has no remedy compatibility, inclusion, offset, alternative-claim, or duplicate-period matrix.
+Legacy case-package conflict records, if present, must remain `PENDING_LEGAL_REVIEW`. The separate structured-fact ledger emits only `PENDING_HUMAN_REVIEW` comparison conflicts with null auto-selection and resolution fields. Neither mechanism resolves a conflict. The project has no remedy compatibility, inclusion, offset, alternative-claim, or duplicate-period matrix.
 
 ## 10. Arithmetic
 
