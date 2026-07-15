@@ -15,10 +15,38 @@ from validate_case_package import (
 )
 
 
+MAX_JSON_NESTING = 100
+
+
 class BoundedJsonInputError(ValueError):
     def __init__(self, code: str, message: str):
         super().__init__(message)
         self.code = code
+
+
+def _exceeds_json_nesting_limit(raw_input: str) -> bool:
+    """Count JSON container depth without treating quoted braces as structure."""
+    depth = 0
+    in_string = False
+    escaped = False
+    for character in raw_input:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            continue
+        if character == '"':
+            in_string = True
+        elif character in "[{":
+            depth += 1
+            if depth > MAX_JSON_NESTING:
+                return True
+        elif character in "]}":
+            depth = max(0, depth - 1)
+    return False
 
 
 def load_bounded_json_object(
@@ -37,6 +65,10 @@ def load_bounded_json_object(
         raise BoundedJsonInputError(
             f"{code_prefix}_UNREADABLE", str(error)
         ) from error
+    if _exceeds_json_nesting_limit(raw_input):
+        raise BoundedJsonInputError(
+            f"{code_prefix}_TOO_DEEPLY_NESTED", f"{label} nesting is unsafe."
+        )
     try:
         value = json.loads(
             raw_input,

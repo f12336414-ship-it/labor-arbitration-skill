@@ -63,6 +63,13 @@ class BoundedJsonInputTests(unittest.TestCase):
                 load_bounded_json_object(path, 10000, "SYNTHETIC", "input")
         self.assertEqual(captured.exception.code, "SYNTHETIC_TOO_DEEPLY_NESTED")
 
+    def test_braces_inside_json_strings_do_not_consume_nesting_budget(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "quoted-braces.json"
+            path.write_text('{"value":"' + "[{" * 200 + '"}', encoding="utf-8")
+            value = load_bounded_json_object(path, 10000, "SYNTHETIC", "input")
+        self.assertEqual(len(value["value"]), 400)
+
 
 class PublishedSchemaAvailabilityTests(unittest.TestCase):
     def test_every_published_schema_boundary_fails_closed(self):
