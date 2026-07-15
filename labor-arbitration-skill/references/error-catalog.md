@@ -19,6 +19,10 @@
 | `FACT_ANALYSIS_CONFLICT_SET_MISMATCH` | 冲突集合被删除、增加、改序、自动选择或手工解决 | 用固定版本引擎重新生成全部未解决冲突；人工意见必须进入未来独立复核记录，不能改分析结果 |
 | `FACT_ANALYSIS_CONFLICT_LIMIT_EXCEEDED` | 精确逐对冲突超过 10,000 条安全上限 | 按明确维度或案件阶段拆分分析并保留全部来源；禁止截断、抽样或删除不利来源 |
 | `FACT_ANALYSIS_PREVIOUS_*` / `FACT_ANALYSIS_INVALIDATION_MISMATCH` | 直接前序缺失、损坏、跨对象、时间回退或变化键声明不完整 | 提供准确直接前序并重新生成；所有新增、删除或变化视图都必须触发下游重新验证 |
+| `EVIDENCE_REVIEW_PARSE_*` / `EVIDENCE_REVIEW_CANDIDATE_*` / `EVIDENCE_REVIEW_ANALYSIS_*` | 审核输入未绑定同一有效解析记录、活动候选或事实分析快照 | 返回原始工作区重新解析和重建候选/分析；不得沿用失效候选或跨原件拼接证明目的 |
+| `EVIDENCE_REVIEW_VIEW_*` / `EVIDENCE_REVIEW_PURPOSE_*` | 证明目的引用不存在、未提供、重复或快照不一致的视图/候选 | 重新选择事实分析中的准确视图并保留每个实际使用的候选；不得加入未使用来源制造数量印象 |
+| `EVIDENCE_REVIEW_GAP_*` / `EVIDENCE_REVIEW_SUGGESTION_*` | 开放缺口或固定补强动作被删除、伪造或手改 | 从用户评估重新生成；补强动作仅为通用收集提示，不能改成可采性、证明力或胜诉结论 |
+| `EVIDENCE_REVIEW_CORROBORATION_*` / `EVIDENCE_REVIEW_SELF_CORROBORATION` | 印证记录重复、自引、乱序或引用语义失效 | 使用独立审核记录 ID 和唯一快照；外部存在性与独立性仍须人工核验 |
 | `INTAKE_MANIFEST_*` | manifest Schema、自哈希或案件包绑定失败 | 从原始目录重新生成 manifest，并按顺序重算 intake/package/state 摘要 |
 | `SOURCE_HOST_NOT_ALLOWLISTED` | URL 主机与声明发布者不匹配 | 修正 publisher code/URL，并在外部法律流程独立核验来源 |
 | `SOURCE_HASH_STATUS_INVALID` | JSON 试图声称当前没有的抓取/哈希证明 | 保持 `DECLARED_UNVERIFIED`；不得通过改名冒充已验证 |

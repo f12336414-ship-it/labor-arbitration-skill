@@ -57,6 +57,12 @@
       "does_not_guarantee": "Semantic extraction, actor identity, value or fact truth, evidence strength, subject-to-legal-entity matching, legal relevance, conflict resolution, discovery of unregistered downstream copies, or submission readiness."
     },
     {
+      "id": "HUMAN_GATED_EVIDENCE_REVIEW_AND_STRENGTHENING",
+      "status": "IMPLEMENTED",
+      "guarantee": "Validates same-parser active fact candidates and structured views before binding self-declared source/completeness/subject/time/integrity/risk assessments and proof purposes; deterministically preserves open gaps and maps them to fixed generic strengthening actions.",
+      "does_not_guarantee": "Authenticity, admissibility, evidence weight, relevance, semantic support, corroborating-record existence or independence, actor identity, legality, legal advice, burden satisfaction, case success, or submission readiness."
+    },
+    {
       "id": "PACKAGE_STRUCTURE_VALIDATION",
       "status": "IMPLEMENTED",
       "guarantee": "Checks required v1.3 fields, supported values, bounded JSON input, and deterministic error output.",

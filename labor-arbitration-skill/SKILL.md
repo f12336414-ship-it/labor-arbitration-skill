@@ -1,6 +1,6 @@
 ---
 name: labor-arbitration-skill
-description: Build and validate local Chinese labor-arbitration reference-integrity packages, content-addressed case workspaces, bounded inert extraction candidates, replayable human-gated fact candidates, deterministic unresolved date/amount/subject conflicts, controlled official-source and public-case freezes, legal version/diff/freshness candidates, structured cross-validation packets, and fail-closed output states without claiming legal correctness. Use for bounded manifests, immutable byte stores, isolated parsing, fact provenance, direct-predecessor invalidation, exact structured conflicts, official response replay, version graphs, review binding, or deciding work must remain below legal review or submission states.
+description: Build and validate local Chinese labor-arbitration reference-integrity packages, content-addressed case workspaces, bounded inert extraction candidates, replayable human-gated fact candidates, deterministic unresolved fact conflicts, human-gated evidence gap and strengthening records, controlled official-source and public-case freezes, legal version/diff/freshness candidates, cross-validation packets, and fail-closed output states without claiming legal correctness. Use for bounded manifests, isolated parsing, fact provenance, dependency invalidation, proof-purpose bindings, evidence gaps, official response replay, review binding, or deciding work must remain below legal review or submission states.
 ---
 
 # Labor Arbitration Reference-Integrity Core
@@ -13,7 +13,7 @@ The longer-term product goal is to help workers and their authorized assistants 
 
 Use this Skill as a local technical integrity workspace. It is not a lawyer, evidence authenticator, Beijing rule pack, limitation engine, professional claim calculator, approval system, or filing tool.
 
-Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). For a local byte store, read [references/case-workspace-contract.md](references/case-workspace-contract.md). Before extraction, read [references/parser-boundary-contract.md](references/parser-boundary-contract.md); before labelling an extracted passage, also read [references/fact-candidate-contract.md](references/fact-candidate-contract.md); before structuring comparison values, read [references/fact-analysis-contract.md](references/fact-analysis-contract.md). For an official public source, read [references/official-source-freeze-contract.md](references/official-source-freeze-contract.md) and [references/legal-source-versioning-contract.md](references/legal-source-versioning-contract.md). For an official public case, also read [references/official-case-collection-contract.md](references/official-case-collection-contract.md). For rule, claim, or calculator review, read [references/review-packet-contract.md](references/review-packet-contract.md). For output state or invalidation, read [references/formal-output-state-contract.md](references/formal-output-state-contract.md). They are authoritative for implemented and unavailable behavior.
+Before building a package, read [references/capabilities.json](references/capabilities.json) and [references/reliability-contract.md](references/reliability-contract.md). For a local byte store, read [references/case-workspace-contract.md](references/case-workspace-contract.md). Before extraction, read [references/parser-boundary-contract.md](references/parser-boundary-contract.md); before labelling an extracted passage, also read [references/fact-candidate-contract.md](references/fact-candidate-contract.md); before structuring comparison values, read [references/fact-analysis-contract.md](references/fact-analysis-contract.md); before assessing evidence, read [references/evidence-review-contract.md](references/evidence-review-contract.md). For an official public source, read [references/official-source-freeze-contract.md](references/official-source-freeze-contract.md) and [references/legal-source-versioning-contract.md](references/legal-source-versioning-contract.md). For an official public case, also read [references/official-case-collection-contract.md](references/official-case-collection-contract.md). For rule, claim, or calculator review, read [references/review-packet-contract.md](references/review-packet-contract.md). For output state or invalidation, read [references/formal-output-state-contract.md](references/formal-output-state-contract.md). They are authoritative for implemented and unavailable behavior.
 
 For any non-zero result, follow [references/error-catalog.md](references/error-catalog.md); never edit the report or suppress a finding.
 
@@ -88,6 +88,15 @@ python scripts/validate_fact_analysis.py <analysis-record.json> [--previous-reco
 ```
 
 The engine lists every deterministic unequal pair and timeline-order conflict without choosing a winner. Any added, removed or changed bound view invalidates the previous analysis snapshot. This covers only registered ledger dependencies; values and actor labels remain unauthenticated and the output is always `INTERNAL_ANALYSIS_ONLY`.
+
+For a human-gated evidence review, embed only local bound records in the specification and run:
+
+```powershell
+python scripts/build_evidence_review.py <local-evidence-review-spec.json>
+python scripts/validate_evidence_review.py <evidence-review-record.json>
+```
+
+The review records user assertions, exact proof-purpose bindings, open gaps and generic strengthening actions. Even the most positive assessment cannot change authenticity, admissibility, evidence weight, legality review or output permission. Corroborating review IDs remain unverified external references.
 
 Create explicit records for raw files, typed evidence locations, facts, claim-element references, legal-source candidates, unverified rules, limitation event inputs, arithmetic inputs, conflicts, statements, and snapshots.
 

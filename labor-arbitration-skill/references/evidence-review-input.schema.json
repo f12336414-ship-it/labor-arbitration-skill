@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/evidence-review-input.schema.json",
+  "title": "Local evidence review build input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "review_artifact_id", "created_at", "actor_label", "parse_record", "fact_candidates", "fact_analysis_record", "previous_fact_analysis_record", "assessment", "proof_purposes", "corroborating_review_bindings"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "review_artifact_id": {"type": "string", "pattern": "^EVIDENCE-[A-Z0-9][A-Z0-9_-]{0,54}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "actor_label": {"type": "string", "minLength": 1, "maxLength": 128},
+    "parse_record": {"type": "object"},
+    "fact_candidates": {
+      "type": "array", "minItems": 1, "maxItems": 100,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["record", "previous_record"],
+        "properties": {"record": {"type": "object"}, "previous_record": {"type": ["object", "null"]}}
+      }
+    },
+    "fact_analysis_record": {"type": "object"},
+    "previous_fact_analysis_record": {"type": ["object", "null"]},
+    "assessment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_status", "completeness_status", "subject_link_status", "time_link_status", "integrity_status", "legality_risk_flags", "notes"],
+      "properties": {
+        "source_status": {"enum": ["USER_PROVIDED_ASSERTED", "EMPLOYER_ISSUED_ASSERTED", "THIRD_PARTY_ISSUED_ASSERTED", "UNKNOWN"]},
+        "completeness_status": {"enum": ["COMPLETE_ASSERTED", "PARTIAL_ASSERTED", "UNKNOWN"]},
+        "subject_link_status": {"enum": ["MATCH_ASSERTED", "MISMATCH_ASSERTED", "UNKNOWN"]},
+        "time_link_status": {"enum": ["MATCH_ASSERTED", "MISMATCH_ASSERTED", "UNKNOWN"]},
+        "integrity_status": {"enum": ["ORIGINAL_BYTES_PRESERVED_ASSERTED", "TRANSFORMED_COPY_ASSERTED", "ALTERATION_CONCERN", "UNKNOWN"]},
+        "legality_risk_flags": {
+          "type": "array", "minItems": 1, "maxItems": 10, "uniqueItems": true,
+          "items": {"enum": ["NONE_DECLARED_UNVERIFIED", "UNKNOWN", "PRIVACY_OR_PERSONAL_INFORMATION", "RECORDING_CONSENT", "UNAUTHORIZED_ACCESS", "CONFIDENTIALITY_OR_TRADE_SECRET", "ALTERATION_OR_FABRICATION_CONCERN", "OTHER"]}
+        },
+        "notes": {"type": "string", "maxLength": 2000}
+      }
+    },
+    "proof_purposes": {
+      "type": "array", "minItems": 1, "maxItems": 100,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["purpose_key", "proposition", "view_ids"],
+        "properties": {
+          "purpose_key": {"$ref": "#/$defs/key"},
+          "proposition": {"type": "string", "minLength": 1, "maxLength": 2000},
+          "view_ids": {"type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true, "items": {"type": "string", "pattern": "^VIEW-[0-9A-F]{24}$"}}
+        }
+      }
+    },
+    "corroborating_review_bindings": {
+      "type": "array", "maxItems": 100, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["evidence_review_id", "record_snapshot_sha256"],
+        "properties": {
+          "evidence_review_id": {"type": "string", "pattern": "^EVREVIEW-[0-9A-F]{24}$"},
+          "record_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "key": {"type": "string", "minLength": 3, "maxLength": 128, "pattern": "^[A-Z][A-Z0-9_.:-]+$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
