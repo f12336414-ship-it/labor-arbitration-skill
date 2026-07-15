@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/case-workspace.schema.json",
+  "title": "Local content-addressed case workspace",
+  "description": "Records locally copied, hash-verified case bytes. It does not prove evidence authenticity or filesystem ACL strength.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "workspace_id",
+    "created_at",
+    "clock_status",
+    "source_intake_manifest_sha256",
+    "storage_layout",
+    "files",
+    "summary",
+    "limitations",
+    "workspace_snapshot_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "workspace_id": {"type": "string", "pattern": "^WORKSPACE-[0-9A-F]{24}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "clock_status": {"const": "SYSTEM_CLOCK_UNATTESTED"},
+    "source_intake_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "storage_layout": {"const": "CONTENT_ADDRESSED_SHA256_V1"},
+    "files": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "raw_id",
+          "source_relative_path",
+          "content_sha256",
+          "size_bytes",
+          "object_relative_path",
+          "object_access_status",
+          "ingestion_status"
+        ],
+        "properties": {
+          "raw_id": {"type": "string", "pattern": "^RAW-[0-9a-f]{64}$"},
+          "source_relative_path": {"type": "string", "minLength": 1, "maxLength": 4096},
+          "content_sha256": {"$ref": "#/$defs/sha256"},
+          "size_bytes": {"type": "integer", "minimum": 0},
+          "object_relative_path": {"type": "string", "pattern": "^objects/[0-9a-f]{2}/[0-9a-f]{64}\\.bin$"},
+          "object_access_status": {
+            "enum": ["POSIX_MODE_0400", "WINDOWS_READONLY_ATTRIBUTE_ACL_UNVERIFIED"]
+          },
+          "ingestion_status": {"const": "COPIED_AND_HASH_VERIFIED"}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file_count", "logical_bytes", "unique_object_count", "stored_bytes"],
+      "properties": {
+        "file_count": {"type": "integer", "minimum": 0},
+        "logical_bytes": {"type": "integer", "minimum": 0},
+        "unique_object_count": {"type": "integer", "minimum": 0},
+        "stored_bytes": {"type": "integer", "minimum": 0}
+      }
+    },
+    "limitations": {
+      "const": [
+        "SOURCE_AUTHENTICITY_NOT_VERIFIED",
+        "WINDOWS_ACL_OR_POSIX_OWNER_TRUST_NOT_ATTESTED",
+        "AT_REST_ENCRYPTION_NOT_IMPLEMENTED",
+        "RELATIVE_FILENAMES_MAY_CONTAIN_SENSITIVE_DATA"
+      ]
+    },
+    "workspace_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

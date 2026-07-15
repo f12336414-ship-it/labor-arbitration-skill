@@ -4,6 +4,30 @@ from __future__ import annotations
 
 
 GUIDANCE = {
+    "CASE_WORKSPACE_OBJECT_HASH_MISMATCH": (
+        "案件工作区对象字节与清单哈希不一致，工作区可能损坏或被修改。",
+        "Stop using this workspace and rebuild a new workspace from sources or a controlled backup that still matches the intake manifest.",
+    ),
+    "LEGAL_FRESHNESS_DERIVATION_MISMATCH": (
+        "法律来源新鲜度状态与绑定的前后正文哈希或时间不一致。",
+        "Regenerate the freshness record from the bound frozen observations and keep the output in DRAFT.",
+    ),
+    "LEGAL_TEXT_DIFF_SNAPSHOT_MISMATCH": (
+        "法律文本差异记录已变化，但 RFC 8785 快照没有同步更新。",
+        "Regenerate the complete exact diff from both bound UTF-8 source texts; do not hand-edit or truncate it.",
+    ),
+    "LEGAL_VERSION_GRAPH_SNAPSHOT_MISMATCH": (
+        "法律版本图已变化，但版本图快照没有同步更新。",
+        "Recalculate the graph snapshot and invalidate every downstream freshness, selection, analysis, calculation, and document binding.",
+    ),
+    "OFFICIAL_CASE_SNAPSHOT_MISMATCH": (
+        "官方公开案例分类记录已变化，但案例记录快照没有同步更新。",
+        "Rebuild the classification from the frozen OFFICIAL_CASE record and retain the privacy and redistribution blocks.",
+    ),
+    "OUTPUT_LEGAL_FRESHNESS_DRAFT_ONLY": (
+        "法律来源检查缺失、不可用、陈旧或已变化，输出只能保持草稿。",
+        "Keep or downgrade the artifact to DRAFT, obtain a new frozen observation, and bind a newly validated freshness snapshot.",
+    ),
     "DATE_FORMAT_INVALID": (
         "日期格式或日历日期无效。请使用真实存在的 ISO 日期；时间戳须为以 Z 结尾的 UTC RFC 3339。",
         "Replace the value with a real ISO calendar date or UTC RFC 3339 timestamp, then regenerate dependent snapshots.",
@@ -15,6 +39,30 @@ GUIDANCE = {
     "PACKAGE_SNAPSHOT_MISMATCH": (
         "案件包内容或请求状态已变化，但包快照没有同步更新。",
         "Recalculate the RFC 8785 package snapshot from the complete current package.",
+    ),
+    "OUTPUT_INVALIDATION_DECLARATION_MISMATCH": (
+        "输出失效声明与前后依赖摘要不一致，旧状态不能继续复用。",
+        "Declare the exact dependency changes and downgrade the output before revalidation.",
+    ),
+    "OUTPUT_PREVIOUS_BINDING_MISMATCH": (
+        "前一状态绑定不属于同一输出对象或类型，不能用来证明本次转换。",
+        "Bind the previous state to the same artifact_id and artifact_type, then regenerate the request snapshot.",
+    ),
+    "OUTPUT_REVIEW_REQUIRED_UNSUPPORTED": (
+        "当前版本尚不能验证进入 REVIEW_REQUIRED 所需的法律来源、分析和专业计算前置条件。",
+        "Keep the artifact in DRAFT until the required legal-source, analysis, and calculator gates are implemented.",
+    ),
+    "OUTPUT_STATE_REQUEST_SNAPSHOT_MISMATCH": (
+        "输出状态请求已变化，但 RFC 8785 请求摘要没有同步更新。",
+        "Recalculate state_request_sha256 from the complete current request.",
+    ),
+    "OUTPUT_STATE_REVALIDATION_REQUIRED": (
+        "案件、法律、分析、计算或文书依赖已变化，必须降级并重新验证。",
+        "Downgrade to DRAFT or INTERNAL_ANALYSIS and revalidate every changed dependency.",
+    ),
+    "OUTPUT_STATE_TRANSITION_INVALID": (
+        "输出状态转换跳过了必要技术阶段或使用了不支持的路径。",
+        "Start at INTERNAL_ANALYSIS and use only the published transition sequence.",
     ),
     "REVIEW_PACKET_REFERENCE_UNKNOWN": (
         "审查包引用了包内不存在的来源、问题或对象标识。",

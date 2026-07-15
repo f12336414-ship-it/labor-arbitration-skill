@@ -18,7 +18,7 @@ The mandatory next state is `PENDING_LEGAL_REVIEW`, outside this project's trust
 
 ## 2. Supported scope
 
-- Local filesystem processing only.
+- Case materials remain in local filesystem processing only. A separate public-source client may make one controlled HTTPS request to an explicit registered URL.
 - Single process and single user; no account or tenant model.
 - Python 3.10 or later.
 - Case-package and intake-manifest schema `1.3` only.
@@ -34,6 +34,9 @@ Untrusted inputs include filenames, file contents, document metadata, prompts em
 Trusted implementation scope is limited to:
 
 - bounded traversal and hashing of stable opened regular files;
+- local content-addressed case-object creation and hash replay;
+- bounded official-source HTTPS transport evidence and response-body freezing;
+- structural legal-version graphs, exact UTF-8 text diffs, technical freshness bindings, and historical interval candidates;
 - RFC 8785 JSON canonicalization and hashing;
 - identifier and cross-reference checks;
 - manifest equality and snapshot binding;
@@ -67,6 +70,12 @@ No model or local JSON field receives legal, evidentiary, privacy, risk, identit
 `INV-11` Schema 1.2 and older schemas, plus the states `MACHINE_VALIDATED_CANDIDATE` and `HUMAN_APPROVED_FOR_SUBMISSION`, are rejected; downgrade is not a compatibility path.
 
 `INV-12` A zero exit code authorizes only the requested technical state. `legal_review_required` remains `true`.
+
+`INV-13` A workspace, frozen source, version graph, diff, freshness check, historical selection, or official-case record proves only its explicitly reported technical scope.
+
+`INV-14` Missing, unavailable, stale, or changed legal-source freshness permits `DRAFT` only; unchanged response bytes still do not prove legal currentness.
+
+`INV-15` Public case access never removes privacy, reuse-policy, rate-limit, or complete-case evaluation requirements.
 
 ## 5. Intake manifest
 
@@ -127,7 +136,9 @@ Current candidate mappings are:
 | `BEIJING_GOVERNMENT` | `www.beijing.gov.cn` |
 | `BEIJING_HRSS` | `rsj.beijing.gov.cn`, `fuwu.rsj.beijing.gov.cn` |
 
-The validator does not perform HTTP requests, follow redirects, freeze raw pages/PDFs, generate content hashes from fetched bytes, normalize content, compare quoted provisions, determine amendment/repeal relationships, monitor updates, or select an applicable historical version. Therefore no rule may be marked verified. Future source states and their proof requirements are defined in [the trust-state model](../../docs/trust-state-machine.md); v0.3 accepts none of those future states.
+The case-package validator does not perform HTTP requests. A separate single-document fetcher follows bounded same-publisher redirects, freezes exact response-body bytes, records selected response/TLS metadata, and replays body hashes offline. Candidate version graphs, complete bounded UTF-8 text diffs, freshness observations, and event-date interval selections are separately available. They do not retain raw HTTP framing, attest the clock, prove automated-access authorization or publisher authorship, verify relationship legal correctness, cover every amending instrument, determine legal currentness or applicability, or provide scheduled monitoring. Therefore no rule may be marked verified. Future source states and their proof requirements are defined in [the trust-state model](../../docs/trust-state-machine.md); current case/review schemas still accept none of those future legal states.
+
+Official public-case collection uses a separate shared rate-limit ledger and `OFFICIAL_CASE` registry purpose. It accepts one explicit URL, freezes the response, and emits privacy-gated classification metadata with redistribution blocked. It is not a crawler and does not extract holdings, remove personal information, establish reuse permission, or create a complete-case corpus.
 
 ## 8. Evidence and facts
 

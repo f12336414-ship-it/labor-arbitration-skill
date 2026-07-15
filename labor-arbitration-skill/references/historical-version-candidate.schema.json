@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/historical-version-candidate.schema.json",
+  "title": "Historical legal-version applicability candidate",
+  "description": "Selects interval-matching candidates for human legal review; it never concludes legal applicability.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "selection_id",
+    "graph_id",
+    "graph_snapshot_sha256",
+    "document_id",
+    "event_date",
+    "jurisdiction",
+    "selection_status",
+    "candidates",
+    "manual_review_status",
+    "limitations",
+    "selection_snapshot_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "selection_id": {"type": "string", "pattern": "^HIST-[A-Z0-9][A-Z0-9_-]{0,58}$"},
+    "graph_id": {"type": "string", "pattern": "^LEGAL-GRAPH-[A-Z0-9][A-Z0-9_-]{0,47}$"},
+    "graph_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+    "document_id": {"$ref": "#/$defs/identifier"},
+    "event_date": {"type": "string", "format": "date"},
+    "jurisdiction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["country", "province"],
+      "properties": {
+        "country": {"const": "CN"},
+        "province": {"const": "Beijing"}
+      }
+    },
+    "selection_status": {
+      "enum": ["UNIQUE_CANDIDATE", "MULTIPLE_CANDIDATES", "NO_CANDIDATE"]
+    },
+    "candidates": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version_id",
+          "content_sha256",
+          "effective_from_candidate",
+          "effective_to_candidate",
+          "match_basis"
+        ],
+        "properties": {
+          "version_id": {"$ref": "#/$defs/identifier"},
+          "content_sha256": {"$ref": "#/$defs/sha256"},
+          "effective_from_candidate": {"type": "string", "format": "date"},
+          "effective_to_candidate": {
+            "oneOf": [{"type": "string", "format": "date"}, {"type": "null"}]
+          },
+          "match_basis": {"const": "EVENT_DATE_INSIDE_DECLARED_CANDIDATE_INTERVAL"}
+        }
+      }
+    },
+    "manual_review_status": {"const": "PENDING_INDEPENDENT_LEGAL_REVIEW"},
+    "limitations": {
+      "const": [
+        "INTERVAL_MATCH_DOES_NOT_PROVE_LEGAL_APPLICABILITY",
+        "VERSION_AND_RELATIONSHIP_CANDIDATES_UNVERIFIED",
+        "SPECIAL_TRANSITIONAL_RULES_NOT_EVALUATED"
+      ]
+    },
+    "selection_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[A-Z][A-Z0-9_-]+$"
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

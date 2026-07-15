@@ -1,0 +1,29 @@
+{
+  "candidates": [
+    {
+      "content_sha256": "68e34448621afa81d4f8639f5b97b927895f5a98800ad01ac9e2a98a79bc5f7c",
+      "effective_from_candidate": "2024-02-01",
+      "effective_to_candidate": "2024-12-31",
+      "match_basis": "EVENT_DATE_INSIDE_DECLARED_CANDIDATE_INTERVAL",
+      "version_id": "VERSION_2024"
+    }
+  ],
+  "document_id": "SYNTHETIC_WAGE_RULE",
+  "event_date": "2024-06-15",
+  "graph_id": "LEGAL-GRAPH-SYNTHETIC_WAGE_RULE",
+  "graph_snapshot_sha256": "6705f962b75277ad429b11150aebfc9a98591640289287242d4ca8f7a58c9bf3",
+  "jurisdiction": {
+    "country": "CN",
+    "province": "Beijing"
+  },
+  "limitations": [
+    "INTERVAL_MATCH_DOES_NOT_PROVE_LEGAL_APPLICABILITY",
+    "VERSION_AND_RELATIONSHIP_CANDIDATES_UNVERIFIED",
+    "SPECIAL_TRANSITIONAL_RULES_NOT_EVALUATED"
+  ],
+  "manual_review_status": "PENDING_INDEPENDENT_LEGAL_REVIEW",
+  "schema_version": "1.0",
+  "selection_id": "HIST-AE62FE88EF730CD5FE8F5E8B",
+  "selection_snapshot_sha256": "1cc49f4b47d6e42526288fbbd39faffa49a6d3555907aad8ff28b4585566789c",
+  "selection_status": "UNIQUE_CANDIDATE"
+}

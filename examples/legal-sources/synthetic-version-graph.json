@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "graph_id": "LEGAL-GRAPH-SYNTHETIC_WAGE_RULE",
+  "document_id": "SYNTHETIC_WAGE_RULE",
+  "publisher_code": "NATIONAL_LAWS_REGULATIONS_DATABASE",
+  "jurisdiction": {
+    "country": "CN",
+    "province": "Beijing"
+  },
+  "generated_at": "2026-07-15T00:00:00Z",
+  "snapshot_canonicalization": "RFC8785",
+  "versions": [
+    {
+      "version_id": "VERSION_2024",
+      "source_url": "https://flk.npc.gov.cn/detail2.html",
+      "frozen_record_snapshot_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "content_sha256": "68e34448621afa81d4f8639f5b97b927895f5a98800ad01ac9e2a98a79bc5f7c",
+      "publication_date_candidate": "2024-01-01",
+      "effective_from_candidate": "2024-02-01",
+      "effective_to_candidate": "2024-12-31",
+      "status": "UNVERIFIED_VERSION_CANDIDATE",
+      "legal_review_status": "PENDING_INDEPENDENT_LEGAL_REVIEW"
+    },
+    {
+      "version_id": "VERSION_2025",
+      "source_url": "https://flk.npc.gov.cn/detail2.html",
+      "frozen_record_snapshot_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "content_sha256": "f22d012ad3bb760623da884967e98e8d1144ded26a5d1c130bc0ae5b030db71b",
+      "publication_date_candidate": "2025-01-01",
+      "effective_from_candidate": "2025-01-01",
+      "effective_to_candidate": null,
+      "status": "UNVERIFIED_VERSION_CANDIDATE",
+      "legal_review_status": "PENDING_INDEPENDENT_LEGAL_REVIEW"
+    }
+  ],
+  "relationships": [
+    {
+      "relationship_id": "REL_2025_SUPERSEDES_2024",
+      "from_version_id": "VERSION_2025",
+      "to_version_id": "VERSION_2024",
+      "relationship_type": "SUPERSEDES",
+      "basis_frozen_record_snapshot_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "text_diff_snapshot_sha256": "a8c68a816c7e2c3316cb59bc7325387763aec20af1e394684114a9f51c0e526c",
+      "status": "UNVERIFIED_RELATIONSHIP_CANDIDATE"
+    }
+  ],
+  "limitations": [
+    "VERSION_RELATIONSHIPS_UNVERIFIED_CANDIDATES",
+    "FROZEN_RECORD_EXISTENCE_NOT_VERIFIED_BY_GRAPH_ONLY",
+    "LEGAL_CURRENTNESS_AND_APPLICABILITY_NOT_VERIFIED"
+  ],
+  "graph_snapshot_sha256": "6705f962b75277ad429b11150aebfc9a98591640289287242d4ca8f7a58c9bf3"
+}

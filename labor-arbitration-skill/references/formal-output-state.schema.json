@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/formal-output-state.schema.json",
+  "title": "Formal output technical state request",
+  "description": "Version 1.0 fail-closed contract for technical output-state transitions. It never authenticates approvals or grants submission readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "artifact_id",
+    "artifact_type",
+    "requested_state",
+    "generated_at",
+    "snapshot_canonicalization",
+    "dependency_snapshots",
+    "previous_binding",
+    "invalidation",
+    "legal_freshness",
+    "approvals",
+    "limitations",
+    "state_request_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "request_id": {
+      "type": "string",
+      "pattern": "^STATE-[A-Z0-9][A-Z0-9_-]{0,63}$"
+    },
+    "artifact_id": {"$ref": "#/$defs/identifier"},
+    "artifact_type": {
+      "enum": [
+        "DIAGNOSTIC_REPORT",
+        "EVIDENCE_REPORT",
+        "LIMITATION_REPORT",
+        "CALCULATION_REPORT",
+        "ARBITRATION_APPLICATION",
+        "EVIDENCE_CATALOG",
+        "HEARING_MATERIAL"
+      ]
+    },
+    "requested_state": {"$ref": "#/$defs/output_state"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "snapshot_canonicalization": {"const": "RFC8785"},
+    "dependency_snapshots": {"$ref": "#/$defs/dependency_snapshots"},
+    "previous_binding": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/previous_binding"}
+      ]
+    },
+    "invalidation": {"$ref": "#/$defs/invalidation"},
+    "legal_freshness": {"$ref": "#/$defs/legal_freshness"},
+    "approvals": {"const": []},
+    "limitations": {
+      "const": [
+        "NO_LEGAL_CORRECTNESS_VERIFIED",
+        "NO_IDENTITY_OR_APPROVAL_AUTHENTICATED",
+        "NO_SUBMISSION_READINESS_GRANTED"
+      ]
+    },
+    "state_request_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[A-Z][A-Z0-9_-]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "output_state": {
+      "enum": [
+        "INTERNAL_ANALYSIS",
+        "DRAFT",
+        "REVIEW_REQUIRED",
+        "SUBMISSION_CANDIDATE"
+      ]
+    },
+    "dependency_kind": {
+      "enum": [
+        "CASE",
+        "LEGAL_SOURCES",
+        "ANALYSIS",
+        "CALCULATIONS",
+        "DOCUMENT"
+      ]
+    },
+    "dependency_snapshots": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_sha256",
+        "legal_sources_sha256",
+        "analysis_sha256",
+        "calculations_sha256",
+        "document_sha256"
+      ],
+      "properties": {
+        "case_sha256": {"$ref": "#/$defs/sha256"},
+        "legal_sources_sha256": {"$ref": "#/$defs/sha256"},
+        "analysis_sha256": {"$ref": "#/$defs/sha256"},
+        "calculations_sha256": {"$ref": "#/$defs/sha256"},
+        "document_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "previous_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "artifact_type",
+        "state",
+        "state_request_sha256",
+        "dependency_snapshots",
+        "legal_freshness"
+      ],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/identifier"},
+        "artifact_type": {
+          "enum": [
+            "DIAGNOSTIC_REPORT",
+            "EVIDENCE_REPORT",
+            "LIMITATION_REPORT",
+            "CALCULATION_REPORT",
+            "ARBITRATION_APPLICATION",
+            "EVIDENCE_CATALOG",
+            "HEARING_MATERIAL"
+          ]
+        },
+        "state": {
+          "enum": ["INTERNAL_ANALYSIS", "DRAFT", "REVIEW_REQUIRED"]
+        },
+        "state_request_sha256": {"$ref": "#/$defs/sha256"},
+        "dependency_snapshots": {"$ref": "#/$defs/dependency_snapshots"},
+        "legal_freshness": {"$ref": "#/$defs/legal_freshness"}
+      }
+    },
+    "legal_freshness": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "check_id", "check_snapshot_sha256"],
+          "properties": {
+            "status": {"const": "NOT_CHECKED"},
+            "check_id": {"type": "null"},
+            "check_snapshot_sha256": {"type": "null"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "check_id", "check_snapshot_sha256"],
+          "properties": {
+            "status": {
+              "enum": [
+                "UNCHANGED_RESPONSE_BODY_CANDIDATE",
+                "CHANGE_DETECTED_REVIEW_REQUIRED",
+                "UNAVAILABLE_DRAFT_ONLY",
+                "STALE_DRAFT_ONLY"
+              ]
+            },
+            "check_id": {
+              "type": "string",
+              "pattern": "^FRESH-[A-Z0-9][A-Z0-9_-]{0,55}$"
+            },
+            "check_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        }
+      ]
+    },
+    "invalidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "changed_dependency_kinds", "reason"],
+      "properties": {
+        "status": {
+          "enum": [
+            "NOT_APPLICABLE",
+            "CURRENT",
+            "INVALIDATED_BY_DEPENDENCY_CHANGE"
+          ]
+        },
+        "changed_dependency_kinds": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/dependency_kind"}
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    }
+  }
+}

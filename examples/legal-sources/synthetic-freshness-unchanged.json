@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "check_id": "FRESH-SYNTHETIC-WAGE-RULE",
+  "document_id": "SYNTHETIC_WAGE_RULE",
+  "publisher_code": "NATIONAL_LAWS_REGULATIONS_DATABASE",
+  "checked_at": "2026-07-15T03:00:00Z",
+  "max_age_hours": 24,
+  "snapshot_canonicalization": "RFC8785",
+  "baseline": {
+    "fetch_id": "FETCH-SYNTHETIC-BASELINE",
+    "record_snapshot_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "content_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "fetched_at": "2026-07-14T03:00:00Z",
+    "final_url": "https://flk.npc.gov.cn/detail2.html"
+  },
+  "network_status": "SUCCESS",
+  "observation": {
+    "fetch_id": "FETCH-SYNTHETIC-OBSERVATION",
+    "record_snapshot_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    "content_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "fetched_at": "2026-07-15T02:59:00Z",
+    "final_url": "https://flk.npc.gov.cn/detail2.html"
+  },
+  "response_change": "UNCHANGED",
+  "technical_freshness_status": "UNCHANGED_RESPONSE_BODY_CANDIDATE",
+  "limitations": [
+    "UNCHANGED_BYTES_DO_NOT_PROVE_LEGAL_CURRENTNESS",
+    "PUBLISHER_AUTHORSHIP_AND_LEGAL_EFFECT_NOT_AUTHENTICATED",
+    "HISTORICAL_APPLICABILITY_NOT_VERIFIED"
+  ],
+  "check_snapshot_sha256": "f3dda63e4e2e787ee5af3041b59a3245b4ceb60abaab8b837d91de610349f368"
+}

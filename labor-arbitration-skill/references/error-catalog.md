@@ -16,5 +16,13 @@
 | `REVIEW_PACKET_SCHEMA_*` / `REVIEW_PACKET_REFERENCE_*` | 三类审查包结构或包内引用不符合 v1.0 契约 | 对照审查包 Schema 修正，不增加批准字段，不删除固定限制 |
 | `REVIEW_SUBJECT_SNAPSHOT_MISMATCH` / `REVIEW_SUBJECT_BINDING_MISMATCH` | 审核对象已变化或审核意见没有绑定当前对象 | 重算对象摘要并重新交叉验证；旧意见不得迁移到新对象 |
 | `REVIEW_PACKET_STATUS_INVALID` / `REVIEW_DECISION_INCONSISTENT` | 状态、总意见与逐题意见不一致 | 按状态前置条件修正；全体同意也只能进入独立法律复核 |
+| `OUTPUT_STATE_*` / `OUTPUT_INVALIDATION_*` | 输出状态跳级、依赖变化、历史对象或请求摘要不一致 | 降级到草稿或内部分析，重算全部受影响摘要并重新验证；不得添加 JSON 审批 |
+| `CASE_WORKSPACE_*` | 本地工作区来源、路径、对象、权限、集合或快照不满足不可变存储契约 | 停止使用该工作区；从仍与 intake manifest 匹配的受控来源或备份创建新工作区并完整重放，不要原地覆盖损坏对象 |
+| `LEGAL_VERSION_*` / `LEGAL_RELATIONSHIP_*` | 版本、关系、区间、来源候选、无环约束或图快照不一致 | 修正未验证候选并重算版本图和下游快照；不得把结构通过解释为法律关系正确 |
+| `LEGAL_TEXT_DIFF_*` | 文本非 UTF-8、超限、差异操作/摘要不一致或快照失效 | 使用安全提取的完整 UTF-8 文本重新生成；不得截断、规范化后冒充逐字差异或手改差异记录 |
+| `LEGAL_FRESHNESS_*` / `OUTPUT_LEGAL_FRESHNESS_*` | 新鲜度观察不可用、陈旧、变化、派生状态或绑定错误 | 保持或降级为 `DRAFT`，重新冻结明确官方来源并生成新检查快照；正文未变也必须继续法律复核 |
+| `HISTORICAL_VERSION_*` | 事件日期、地区、候选区间、状态或选择快照不一致 | 修正事件日期/版本区间后重新选择，并由独立法律审核处理过渡规则和适用性 |
+| `CASE_RATE_LIMIT_*` / `CASE_COLLECTION_*` | 官方案例发布者不允许、限速间隔不足、时钟回退、账本损坏或并发锁冲突 | 停止请求并保留账本；确认来源政策和系统时钟后等待足够间隔，不要删除账本或绕过限速 |
+| `OFFICIAL_CASE_*` | 冻结案例来源、分类、隐私复用状态或记录快照不一致 | 保持禁止再传播，从有效 `OFFICIAL_CASE` 冻结记录重建分类，并完成来源政策、隐私和法律复核 |
 
 未知错误仍应 fail-closed。若错误提示与实际输入不一致，请提交不含真实案件或个人信息的最小合成复现。

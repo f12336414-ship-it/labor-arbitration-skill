@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/official-case-record.schema.json",
+  "title": "Privacy-gated official public case classification record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "case_artifact_id",
+    "collector_version",
+    "classified_at",
+    "source_binding",
+    "classification",
+    "classification_status",
+    "privacy_review_status",
+    "redistribution_status",
+    "limitations",
+    "case_record_snapshot_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "case_artifact_id": {"type": "string", "pattern": "^OFFICIAL-CASE-[A-Z0-9][A-Z0-9_-]{0,47}$"},
+    "collector_version": {"const": "1.0.0"},
+    "classified_at": {"type": "string", "format": "date-time"},
+    "source_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fetch_id",
+        "record_snapshot_sha256",
+        "content_sha256",
+        "publisher_code",
+        "final_url"
+      ],
+      "properties": {
+        "fetch_id": {"type": "string", "pattern": "^FETCH-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{16}$"},
+        "record_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+        "content_sha256": {"$ref": "#/$defs/sha256"},
+        "publisher_code": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+        "final_url": {"type": "string", "pattern": "^https://", "maxLength": 2048}
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dispute_categories", "document_type", "procedural_stage", "jurisdiction_scope"],
+      "properties": {
+        "dispute_categories": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "WAGE_OR_WAGE_DIFFERENCE",
+              "OVERTIME_PAY",
+              "UNSIGNED_CONTRACT_DOUBLE_WAGE",
+              "TERMINATION_COMPENSATION",
+              "ANNUAL_LEAVE_PAY",
+              "SOCIAL_INSURANCE",
+              "EMPLOYMENT_RELATIONSHIP",
+              "OTHER_OR_UNDETERMINED"
+            ]
+          }
+        },
+        "document_type": {
+          "enum": ["OFFICIAL_TYPICAL_CASE", "PUBLIC_JUDGMENT", "PUBLIC_RULING", "OTHER_OFFICIAL_CASE_MATERIAL"]
+        },
+        "procedural_stage": {
+          "enum": ["ARBITRATION", "FIRST_INSTANCE", "SECOND_INSTANCE", "RETRIAL", "MIXED_OR_UNDETERMINED"]
+        },
+        "jurisdiction_scope": {"enum": ["BEIJING", "NATIONAL", "OTHER_OR_UNDETERMINED"]}
+      }
+    },
+    "classification_status": {"const": "UNVERIFIED_MANUAL_CLASSIFICATION"},
+    "privacy_review_status": {"const": "REQUIRED_BEFORE_ANY_REDISSEMINATION"},
+    "redistribution_status": {"const": "BLOCKED"},
+    "limitations": {
+      "const": [
+        "PUBLIC_ACCESS_DOES_NOT_REMOVE_PRIVACY_OR_REUSE_RISK",
+        "CLASSIFICATION_NOT_LEGALLY_VERIFIED",
+        "NO_CASE_OUTCOME_OR_HOLDING_EXTRACTED"
+      ]
+    },
+    "case_record_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -7,7 +7,7 @@
     "long_term_outcome": "Provide a local-first, evidence-centered Chinese labor-dispute casework system for source-governed legal verification, claim analysis, deterministic calculations, traceable documents, human review, and quality gates.",
     "current_release_job": "Validate a bounded local reference-integrity package before handing it to an external legal review workflow.",
     "primary_use_moment": "After local materials have been collected or structured, but before relying on legal analysis, amounts, deadlines, or filing documents.",
-    "primary_output": "A reproducible technical handoff package: observed-byte manifest, locked v1.3 case package, and deterministic validation report.",
+    "primary_output": "A reproducible technical handoff package: observed-byte manifest, local content-addressed workspace, locked v1.3 case package, governed source artifacts, and deterministic validation reports.",
     "success_condition": "A reviewer can reproduce the bytes, references, and snapshots used; relevant changes require revalidation; unverified legal properties remain visible."
   },
   "highest_automated_state": "REFERENCE_INTEGRITY_VALIDATED",
@@ -25,6 +25,12 @@
       "status": "IMPLEMENTED",
       "guarantee": "Separates unattested system observations, unavailable user provenance, generator/runtime metadata, output-permission status, and manifest self-hash.",
       "does_not_guarantee": "Generator authenticity, operator identity, timestamp trust, Windows ACL enforcement, or evidence provenance."
+    },
+    {
+      "id": "LOCAL_CONTENT_ADDRESSED_CASE_WORKSPACE",
+      "status": "IMPLEMENTED",
+      "guarantee": "Re-reads v1.3 intake sources, requires unchanged size and SHA-256, copies bytes into a deduplicated content-addressed local store, marks objects read-only, rejects unsafe paths and tree overlap, and replay-validates migrated or restored object sets.",
+      "does_not_guarantee": "Evidence authenticity, at-rest encryption, trusted filesystem ownership or Windows ACLs, backup durability, semantic safety, or source provenance."
     },
     {
       "id": "BYTE_PREFIX_TYPE_AND_DUPLICATE_RELATIONSHIPS",
@@ -52,15 +58,21 @@
     },
     {
       "id": "OFFICIAL_SOURCE_CANDIDATE_HOST_FILTER",
-      "status": "PARTIAL",
-      "guarantee": "Requires HTTPS and matches declared publisher codes to a small reviewed hostname allowlist.",
-      "does_not_guarantee": "URL availability, redirect safety, publisher authorship, page contents, hash provenance, currentness, amendment history, exact quotation, or case applicability."
+      "status": "IMPLEMENTED",
+      "guarantee": "Loads a schema-validated publisher registry and requires exact HTTPS hosts that match the declared publisher and purpose.",
+      "does_not_guarantee": "URL availability, publisher authorship, page contents, currentness, amendment history, exact quotation, automated-access authorization, or case applicability."
     },
     {
       "id": "STRUCTURED_CROSS_VALIDATION_REVIEW_PACKETS",
       "status": "IMPLEMENTED",
       "guarantee": "Validates versioned rule, claim, and calculator review-packet structures, official-source candidate references, declared version-bound rule dependencies, review-question subject paths, RFC 8785 subject and packet snapshots, and self-declared cross-validation record consistency.",
       "does_not_guarantee": "Existence or contents of external rule packets, source content or currentness, legal correctness, reviewer identity or qualification, professional approval, or submission readiness."
+    },
+    {
+      "id": "FORMAL_OUTPUT_STATE_INVALIDATION_CONTRACT",
+      "status": "IMPLEMENTED",
+      "guarantee": "Validates formal-output state-request structure, RFC 8785 request snapshots, same-artifact previous bindings, declared dependency changes, legal-freshness check bindings, transition shape, and fail-closed draft downgrade requirements.",
+      "does_not_guarantee": "Dependency snapshot authenticity, existence of the declared previous request, legal currentness or correctness, reviewer identity, approval, REVIEW_REQUIRED eligibility, or submission readiness."
     },
     {
       "id": "EVIDENCE_LOCATION_METADATA",
@@ -82,7 +94,33 @@
     },
     {
       "id": "LEGAL_SOURCE_FETCH_FREEZE_AND_VERSIONING",
-      "status": "NOT_IMPLEMENTED"
+      "status": "PARTIAL",
+      "guarantee": "Performs one explicit read-only HTTPS GET with TLS 1.2+, public-peer checks, bounded same-publisher redirects, identity encoding, media/size/time limits, content-addressed response-body storage, selected response/TLS metadata, and offline replay validation; structurally binds unverified version relationships.",
+      "does_not_guarantee": "Raw HTTP framing, clock attestation, automated-access authorization, publisher authorship, legal currentness, relationship legal correctness, case applicability, or scheduled monitoring."
+    },
+    {
+      "id": "LEGAL_VERSION_GRAPH_AND_EXACT_TEXT_DIFF",
+      "status": "IMPLEMENTED",
+      "guarantee": "Validates bounded candidate version graphs, internal references, acyclic amendment-like edges, exact UTF-8 source hashes, unnormalized line operations, complete non-truncated diff records, and RFC 8785 graph and diff snapshots.",
+      "does_not_guarantee": "Correct extraction from HTML or PDF, legal correctness of a relationship, legal effect of a textual change, publisher authorship, or currentness."
+    },
+    {
+      "id": "LEGAL_TECHNICAL_FRESHNESS_BINDING",
+      "status": "PARTIAL",
+      "guarantee": "Compares bound frozen response-body hashes, enforces a technical maximum age, records unavailable, changed, stale, or unchanged candidate status, and forces draft-only output on failure states.",
+      "does_not_guarantee": "Scheduled execution, alert delivery, legal currentness, completeness of all amending instruments, publisher authorship, or submission eligibility."
+    },
+    {
+      "id": "HISTORICAL_VERSION_INTERVAL_CANDIDATE",
+      "status": "IMPLEMENTED",
+      "guarantee": "Selects zero, one, or multiple version candidates whose declared effective intervals contain an ISO event date in the exact graph jurisdiction, and binds the graph and selection snapshots.",
+      "does_not_guarantee": "Legal applicability, retroactivity, special transitional rules, relationship correctness, or independent legal approval."
+    },
+    {
+      "id": "CONTROLLED_OFFICIAL_CASE_COLLECTION",
+      "status": "IMPLEMENTED",
+      "guarantee": "Restricts collection to one explicit OFFICIAL_CASE URL, persists a fail-closed per-publisher minimum-interval reservation, freezes content and transport metadata, and creates versioned controlled classification metadata with redistribution blocked.",
+      "does_not_guarantee": "Automated-access authorization, privacy or reuse permission, completeness of public cases, legal correctness of classification, case holdings, or suitability as a complete-case evaluation corpus."
     },
     {
       "id": "BEIJING_AUTHORITATIVE_RULE_PACK",

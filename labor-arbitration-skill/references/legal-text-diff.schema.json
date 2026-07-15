@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/legal-text-diff.schema.json",
+  "title": "Exact UTF-8 legal source text diff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "diff_id",
+    "from_version_id",
+    "to_version_id",
+    "from_content_sha256",
+    "to_content_sha256",
+    "encoding",
+    "unicode_normalization",
+    "algorithm",
+    "from_character_count",
+    "to_character_count",
+    "from_line_count",
+    "to_line_count",
+    "change_summary",
+    "operations",
+    "unified_diff",
+    "diff_truncated",
+    "limitations",
+    "diff_snapshot_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "diff_id": {"type": "string", "pattern": "^DIFF-[A-Z0-9][A-Z0-9_-]{0,58}$"},
+    "from_version_id": {"$ref": "#/$defs/identifier"},
+    "to_version_id": {"$ref": "#/$defs/identifier"},
+    "from_content_sha256": {"$ref": "#/$defs/sha256"},
+    "to_content_sha256": {"$ref": "#/$defs/sha256"},
+    "encoding": {"const": "UTF-8"},
+    "unicode_normalization": {"const": "NONE"},
+    "algorithm": {"const": "PYTHON_UNIFIED_DIFF_EXACT_LINES_V1"},
+    "from_character_count": {"type": "integer", "minimum": 0, "maximum": 1048576},
+    "to_character_count": {"type": "integer", "minimum": 0, "maximum": 1048576},
+    "from_line_count": {"type": "integer", "minimum": 0, "maximum": 1048576},
+    "to_line_count": {"type": "integer", "minimum": 0, "maximum": 1048576},
+    "change_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["equal", "added_line_units", "removed_line_units"],
+      "properties": {
+        "equal": {"type": "boolean"},
+        "added_line_units": {"type": "integer", "minimum": 0, "maximum": 1048576},
+        "removed_line_units": {"type": "integer", "minimum": 0, "maximum": 1048576}
+      }
+    },
+    "operations": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tag",
+          "from_start_line",
+          "from_end_line",
+          "to_start_line",
+          "to_end_line",
+          "removed_text",
+          "added_text"
+        ],
+        "properties": {
+          "tag": {"enum": ["REPLACE", "DELETE", "INSERT"]},
+          "from_start_line": {"type": "integer", "minimum": 0, "maximum": 1048576},
+          "from_end_line": {"type": "integer", "minimum": 0, "maximum": 1048576},
+          "to_start_line": {"type": "integer", "minimum": 0, "maximum": 1048576},
+          "to_end_line": {"type": "integer", "minimum": 0, "maximum": 1048576},
+          "removed_text": {"type": "string", "maxLength": 4194304},
+          "added_text": {"type": "string", "maxLength": 4194304}
+        }
+      }
+    },
+    "unified_diff": {"type": "string", "maxLength": 4194304},
+    "diff_truncated": {"const": false},
+    "limitations": {
+      "const": [
+        "TEXT_DIFF_HAS_NO_LEGAL_SEMANTIC_INTERPRETATION",
+        "INPUT_VERSION_IDENTITY_DEPENDS_ON_BOUND_CONTENT_HASHES",
+        "PDF_OR_HTML_EXTRACTION_NOT_PERFORMED"
+      ]
+    },
+    "diff_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[A-Z][A-Z0-9_-]+$"
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

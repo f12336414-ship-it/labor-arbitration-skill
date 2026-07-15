@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "reviewed_at": "2026-07-15",
+  "entries": [
+    {
+      "publisher_code": "NATIONAL_LAWS_REGULATIONS_DATABASE",
+      "authority_name": "国家法律法规数据库",
+      "hosts": ["flk.npc.gov.cn"],
+      "permitted_purposes": ["NORMATIVE_LEGAL_SOURCE"],
+      "allowed_media_types": ["text/html", "application/pdf"],
+      "max_response_bytes": 26214400,
+      "minimum_interval_seconds": 0,
+      "single_request_only": true,
+      "automated_access_authorization_status": "NOT_ASSERTED",
+      "evidence_urls": ["https://flk.npc.gov.cn/"]
+    },
+    {
+      "publisher_code": "STATE_COUNCIL",
+      "authority_name": "中华人民共和国国务院",
+      "hosts": ["www.gov.cn"],
+      "permitted_purposes": ["NORMATIVE_LEGAL_SOURCE"],
+      "allowed_media_types": ["text/html", "text/plain", "application/pdf"],
+      "max_response_bytes": 26214400,
+      "minimum_interval_seconds": 0,
+      "single_request_only": true,
+      "automated_access_authorization_status": "NOT_ASSERTED",
+      "evidence_urls": ["https://www.gov.cn/"]
+    },
+    {
+      "publisher_code": "SUPREME_PEOPLES_COURT",
+      "authority_name": "中华人民共和国最高人民法院",
+      "hosts": ["www.court.gov.cn"],
+      "permitted_purposes": ["NORMATIVE_LEGAL_SOURCE", "OFFICIAL_CASE"],
+      "allowed_media_types": ["text/html", "text/plain", "application/pdf"],
+      "max_response_bytes": 26214400,
+      "minimum_interval_seconds": 10,
+      "single_request_only": true,
+      "automated_access_authorization_status": "NOT_ASSERTED",
+      "evidence_urls": ["https://www.court.gov.cn/"]
+    },
+    {
+      "publisher_code": "MOHRSS",
+      "authority_name": "中华人民共和国人力资源和社会保障部",
+      "hosts": ["www.mohrss.gov.cn"],
+      "permitted_purposes": ["NORMATIVE_LEGAL_SOURCE", "OFFICIAL_CASE"],
+      "allowed_media_types": ["text/html", "text/plain", "application/pdf"],
+      "max_response_bytes": 26214400,
+      "minimum_interval_seconds": 10,
+      "single_request_only": true,
+      "automated_access_authorization_status": "NOT_ASSERTED",
+      "evidence_urls": ["https://www.mohrss.gov.cn/"]
+    },
+    {
+      "publisher_code": "BEIJING_GOVERNMENT",
+      "authority_name": "北京市人民政府",
+      "hosts": ["www.beijing.gov.cn"],
+      "permitted_purposes": ["NORMATIVE_LEGAL_SOURCE", "OFFICIAL_CASE"],
+      "allowed_media_types": ["text/html", "text/plain", "application/pdf"],
+      "max_response_bytes": 26214400,
+      "minimum_interval_seconds": 10,
+      "single_request_only": true,
+      "automated_access_authorization_status": "NOT_ASSERTED",
+      "evidence_urls": ["https://www.beijing.gov.cn/"]
+    },
+    {
+      "publisher_code": "BEIJING_HRSS",
+      "authority_name": "北京市人力资源和社会保障局",
+      "hosts": ["fuwu.rsj.beijing.gov.cn", "rsj.beijing.gov.cn"],
+      "permitted_purposes": ["NORMATIVE_LEGAL_SOURCE", "OFFICIAL_CASE"],
+      "allowed_media_types": ["text/html", "text/plain", "application/pdf", "application/json"],
+      "max_response_bytes": 26214400,
+      "minimum_interval_seconds": 10,
+      "single_request_only": true,
+      "automated_access_authorization_status": "NOT_ASSERTED",
+      "evidence_urls": ["https://rsj.beijing.gov.cn/"]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "algorithm": "PYTHON_UNIFIED_DIFF_EXACT_LINES_V1",
+  "change_summary": {
+    "added_line_units": 2,
+    "equal": false,
+    "removed_line_units": 1
+  },
+  "diff_id": "DIFF-F17B5590D4CD62E09BD2504C",
+  "diff_snapshot_sha256": "a8c68a816c7e2c3316cb59bc7325387763aec20af1e394684114a9f51c0e526c",
+  "diff_truncated": false,
+  "encoding": "UTF-8",
+  "from_character_count": 42,
+  "from_content_sha256": "68e34448621afa81d4f8639f5b97b927895f5a98800ad01ac9e2a98a79bc5f7c",
+  "from_line_count": 2,
+  "from_version_id": "VERSION_2024",
+  "limitations": [
+    "TEXT_DIFF_HAS_NO_LEGAL_SEMANTIC_INTERPRETATION",
+    "INPUT_VERSION_IDENTITY_DEPENDS_ON_BOUND_CONTENT_HASHES",
+    "PDF_OR_HTML_EXTRACTION_NOT_PERFORMED"
+  ],
+  "operations": [
+    {
+      "added_text": "第二条 工资应在每月十日前支付。\n第三条 本版本增加合成通知条款。\n",
+      "from_end_line": 2,
+      "from_start_line": 1,
+      "removed_text": "第二条 工资应在每月五日前支付。\n",
+      "tag": "REPLACE",
+      "to_end_line": 3,
+      "to_start_line": 1
+    }
+  ],
+  "schema_version": "1.0",
+  "to_character_count": 59,
+  "to_content_sha256": "f22d012ad3bb760623da884967e98e8d1144ded26a5d1c130bc0ae5b030db71b",
+  "to_line_count": 3,
+  "to_version_id": "VERSION_2025",
+  "unicode_normalization": "NONE",
+  "unified_diff": "--- VERSION_2024\n+++ VERSION_2025\n@@ -1,2 +1,3 @@\n 第一条 合成规则用于技术测试，不是真实法律文本。\n-第二条 工资应在每月五日前支付。\n+第二条 工资应在每月十日前支付。\n+第三条 本版本增加合成通知条款。\n"
+}
