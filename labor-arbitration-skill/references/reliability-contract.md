@@ -146,7 +146,7 @@ Evidence requires a raw-file ID and a typed non-empty location. The validator ch
 
 Allowed fact states are `USER_ASSERTED`, `EVIDENCE_LINKED`, `DISPUTED`, and `UNKNOWN`. `EVIDENCE_LINKED` means reference existence only.
 
-The project does not implement PDF/Office/email parsing, OCR, chat parsing, audio transcription, video extraction, page or timestamp existence checks, excerpt comparison, contradiction detection, authenticity analysis, semantic support scoring, proof-standard analysis, or human anchor confirmation.
+The project implements bounded inert extraction candidates for UTF-8 text, CSV, DOCX, XLSX and plain-text email plus non-recursive ZIP entry inspection. It does not implement PDF parsing, OCR, image/chat/audio/video transcription, attachment recursion, operating-system parser sandboxing, page or timestamp existence checks, excerpt comparison, contradiction detection, authenticity analysis, semantic support scoring, proof-standard analysis, or human anchor confirmation.
 
 ## 9. Claims, limitation, and conflicts
 

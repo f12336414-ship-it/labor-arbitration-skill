@@ -7,6 +7,10 @@
 | `SCAN_*_LIMIT_EXCEEDED` | 文件数、单文件、总量、深度或时间超过边界 | 缩小明确授权的输入范围，或在风险评估后显式调整对应 CLI 上限；不要删除安全检查 |
 | `SCAN_*_CHANGED_DURING_READ` | 文件或整棵目录在扫描窗口内变化 | 停止写入、同步或杀毒修改，确认目录稳定后重新扫描 |
 | `SCAN_REPARSE_POINT_REFUSED` / `SCAN_MOUNT_POINT_REFUSED` | 输入可能越过授权目录 | 复制所需普通文件到隔离目录，不要让 scanner 跟随链接 |
+| `PARSER_WORKER_TIMEOUT` / `PARSER_WORKER_*` | 隔离子进程超时、协议、输出或启动失败 | 保留原件，检查资源限制和运行时，不得改写结果绕过边界 |
+| `PARSER_ARCHIVE_*` / `PARSER_XML_*` | 压缩包路径、体积、压缩比、链接、加密或 XML 主动声明不安全 | 在独立受控环境转换为简单格式后重新登记原始字节与转换结果 |
+| `PARSER_OOXML_*` | Office 文件含宏、外链、嵌入对象或无效关系 | 删除主动内容需由用户在副本中明确完成；原件必须保留且不得执行 |
+| `PARSER_PDF_ADAPTER_NOT_IMPLEMENTED` / `PARSER_IMAGE_OCR_NOT_IMPLEMENTED` | 当前隔离等级未批准 PDF/OCR 引擎 | 保持拒绝，等待 P6-03 沙箱和受审引擎，不得把二进制当作文本 |
 | `INTAKE_MANIFEST_*` | manifest Schema、自哈希或案件包绑定失败 | 从原始目录重新生成 manifest，并按顺序重算 intake/package/state 摘要 |
 | `SOURCE_HOST_NOT_ALLOWLISTED` | URL 主机与声明发布者不匹配 | 修正 publisher code/URL，并在外部法律流程独立核验来源 |
 | `SOURCE_HASH_STATUS_INVALID` | JSON 试图声称当前没有的抓取/哈希证明 | 保持 `DECLARED_UNVERIFIED`；不得通过改名冒充已验证 |

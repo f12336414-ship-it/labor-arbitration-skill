@@ -35,6 +35,9 @@ OFFICIAL_CASE_RECORD_SCHEMA_PATH = (
     REFERENCE_DIRECTORY / "official-case-record.schema.json"
 )
 CASE_WORKSPACE_SCHEMA_PATH = REFERENCE_DIRECTORY / "case-workspace.schema.json"
+PARSER_EXTRACTION_RECORD_SCHEMA_PATH = (
+    REFERENCE_DIRECTORY / "parser-extraction-record.schema.json"
+)
 
 
 @lru_cache(maxsize=None)
@@ -274,6 +277,27 @@ def validate_published_case_workspace(workspace: dict) -> list[dict]:
         code="CASE_WORKSPACE_SCHEMA_VALIDATION_ERROR",
         prefix="",
         message="Case workspace does not conform to the published v1.0 JSON Schema.",
+    )
+
+
+def validate_published_parser_extraction_record(record: dict) -> list[dict]:
+    try:
+        validator = _load_validator(PARSER_EXTRACTION_RECORD_SCHEMA_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.SchemaError):
+        return [
+            finding(
+                "PARSER_EXTRACTION_SCHEMA_UNAVAILABLE",
+                "$",
+                "The bundled parser-extraction-record v1.0 JSON Schema is unavailable or invalid.",
+                "P0",
+            )
+        ]
+    return _collect_errors(
+        validator,
+        record,
+        code="PARSER_EXTRACTION_SCHEMA_VALIDATION_ERROR",
+        prefix="",
+        message="Parser extraction record does not conform to the published v1.0 JSON Schema.",
     )
 
 
