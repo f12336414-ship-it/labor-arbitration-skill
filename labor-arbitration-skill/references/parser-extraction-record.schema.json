@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/f12336414-ship-it/labor-arbitration-skill/parser-extraction-record.schema.json",
+  "title": "Bounded parser extraction record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "parse_id", "created_at", "clock_status",
+    "workspace_binding", "parser", "status", "detected_format", "anchors",
+    "warnings", "security", "limits", "limitations", "record_snapshot_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "parse_id": {"type": "string", "pattern": "^PARSE-[0-9A-F]{24}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "clock_status": {"const": "SYSTEM_CLOCK_UNATTESTED"},
+    "workspace_binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workspace_id", "workspace_snapshot_sha256", "raw_id", "content_sha256", "size_bytes"],
+      "properties": {
+        "workspace_id": {"type": "string", "pattern": "^WORKSPACE-[0-9A-F]{24}$"},
+        "workspace_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+        "raw_id": {"type": "string", "pattern": "^RAW-[0-9a-f]{64}$"},
+        "content_sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 0}
+      }
+    },
+    "parser": {
+      "type": "object", "additionalProperties": false,
+      "required": ["adapter", "adapter_version", "runner_version", "execution_boundary"],
+      "properties": {
+        "adapter": {"enum": ["UTF8_TEXT", "CSV", "DOCX", "XLSX", "EML", "ZIP_INSPECTION", "UNSUPPORTED"]},
+        "adapter_version": {"const": "1.0.0"},
+        "runner_version": {"const": "1.0.0"},
+        "execution_boundary": {"const": "ISOLATED_PYTHON_CHILD_BOUNDED_IO_NOT_OS_SANDBOX"}
+      }
+    },
+    "status": {"enum": ["SUCCEEDED", "REFUSED"]},
+    "detected_format": {"enum": ["UTF8_TEXT", "CSV", "DOCX", "XLSX", "EML", "ZIP", "PDF", "PNG", "JPEG", "UNKNOWN"]},
+    "anchors": {
+      "type": "array", "maxItems": 10000,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["anchor_id", "kind", "coordinate", "text", "text_sha256"],
+        "properties": {
+          "anchor_id": {"type": "string", "pattern": "^ANCHOR-[0-9A-F]{24}$"},
+          "kind": {"enum": ["TEXT_LINE", "CSV_CELL", "DOCX_PARAGRAPH", "XLSX_CELL", "EMAIL_HEADER", "EMAIL_TEXT_LINE", "ARCHIVE_ENTRY"]},
+          "coordinate": {"type": "string", "minLength": 1, "maxLength": 1024},
+          "text": {"type": "string", "maxLength": 10000},
+          "text_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "warnings": {"type": "array", "maxItems": 100, "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,127}$"}},
+    "security": {
+      "type": "object", "additionalProperties": false,
+      "required": ["network_access", "macro_status", "external_relationship_status", "formula_execution", "os_sandbox_status", "refusal_code"],
+      "properties": {
+        "network_access": {"const": "NO_NETWORK_CLIENT_IN_WORKER_NOT_OS_ENFORCED"},
+        "macro_status": {"enum": ["NOT_APPLICABLE", "NOT_DETECTED", "DETECTED_REFUSED"]},
+        "external_relationship_status": {"enum": ["NOT_APPLICABLE", "NOT_DETECTED", "DETECTED_REFUSED"]},
+        "formula_execution": {"const": "NEVER_EVALUATED"},
+        "os_sandbox_status": {"const": "NOT_IMPLEMENTED"},
+        "refusal_code": {"type": ["string", "null"], "pattern": "^[A-Z][A-Z0-9_]{2,127}$"}
+      }
+    },
+    "limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_bytes", "anchor_count", "extracted_characters", "wall_timeout_seconds"],
+      "properties": {
+        "source_bytes": {"type": "integer", "minimum": 0, "maximum": 20971520},
+        "anchor_count": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "extracted_characters": {"type": "integer", "minimum": 0, "maximum": 2000000},
+        "wall_timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 30}
+      }
+    },
+    "limitations": {
+      "const": [
+        "EXTRACTION_DOES_NOT_PROVE_VISUAL_ANCHOR_EXISTENCE",
+        "EXTRACTION_DOES_NOT_PROVE_EVIDENCE_AUTHENTICITY",
+        "DOCUMENT_TEXT_IS_UNTRUSTED_DATA_NOT_INSTRUCTIONS",
+        "OS_LEVEL_SANDBOX_NOT_IMPLEMENTED",
+        "PDF_AND_OCR_EXTRACTION_NOT_IMPLEMENTED"
+      ]
+    },
+    "record_snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

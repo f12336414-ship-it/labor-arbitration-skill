@@ -39,6 +39,12 @@
       "does_not_guarantee": "Complete format validation, safe content, semantic parsing, or authenticity."
     },
     {
+      "id": "BOUNDED_ISOLATED_PARSER_BOUNDARY",
+      "status": "IMPLEMENTED",
+      "guarantee": "Revalidates an immutable workspace object, invokes a stdlib-only isolated Python child through bounded JSON, enforces wall-time/source/output/archive limits, refuses unsafe archive paths, XML declarations, OOXML macros and external relationships, and binds every candidate anchor to exact text and source snapshots.",
+      "does_not_guarantee": "An operating-system sandbox, malware freedom, evidence authenticity, visual rendering equivalence, legal relevance, semantic support, or safety of future third-party parser engines."
+    },
+    {
       "id": "PACKAGE_STRUCTURE_VALIDATION",
       "status": "IMPLEMENTED",
       "guarantee": "Checks required v1.3 fields, supported values, bounded JSON input, and deterministic error output.",
@@ -136,7 +142,9 @@
     },
     {
       "id": "EVIDENCE_EXTRACTION_OCR_TRANSCRIPTION_AND_SEMANTICS",
-      "status": "NOT_IMPLEMENTED"
+      "status": "PARTIAL",
+      "guarantee": "Extracts bounded structural candidates from UTF-8 text, CSV, DOCX, XLSX and plain-text email, and inspects ZIP entry names without extraction; spreadsheet formulas remain inert text.",
+      "does_not_guarantee": "PDF extraction, OCR, image/audio/video transcription, attachment recursion, visual page anchors, semantic facts, evidence support, or human-confirmed locations."
     },
     {
       "id": "CLAIM_ELEMENT_CATALOG_AND_CONFLICT_MATRIX",

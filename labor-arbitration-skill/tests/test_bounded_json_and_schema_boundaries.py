@@ -85,6 +85,7 @@ class PublishedSchemaAvailabilityTests(unittest.TestCase):
             schema_validation.validate_published_historical_version_candidate,
             schema_validation.validate_published_official_case_record,
             schema_validation.validate_published_case_workspace,
+            schema_validation.validate_published_parser_extraction_record,
         ]
         with patch.object(schema_validation, "_load_validator", side_effect=OSError):
             for validator in validators:

@@ -45,6 +45,7 @@ class RepositoryQualityTests(unittest.TestCase):
             "create_case_workspace.py",
             "fetch_official_case.py",
             "fetch_official_source.py",
+            "parse_case_workspace.py",
             "select_historical_version.py",
             "validate_case_package.py",
             "validate_case_workspace.py",
@@ -55,6 +56,7 @@ class RepositoryQualityTests(unittest.TestCase):
             "validate_legal_text_diff.py",
             "validate_legal_version_graph.py",
             "validate_official_case_record.py",
+            "validate_parser_extraction.py",
             "validate_review_packet.py",
         ):
             self.assertTrue((SKILL_ROOT / "scripts" / script_name).is_file())
@@ -102,18 +104,25 @@ class RepositoryQualityTests(unittest.TestCase):
                             called_names.add(node.func.id)
                         elif isinstance(node.func, ast.Attribute):
                             called_attributes.add(node.func.attr)
-                allowed_network_imports = (
+                allowed_runtime_imports = (
                     {"http.client"}
                     if script.name == "official_source_fetch.py"
+                    else {"subprocess"}
+                    if script.name == "isolated_parser.py"
                     else set()
                 )
                 self.assertFalse(
-                    imported_roots & (forbidden_import_roots - allowed_network_imports)
+                    imported_roots & (forbidden_import_roots - allowed_runtime_imports)
                 )
                 if script.name != "official_source_fetch.py":
                     self.assertNotIn("http.client", imported_roots)
                 self.assertFalse(called_names & {"eval", "exec", "compile"})
                 self.assertFalse(called_attributes & {"system", "popen"})
+        worker_text = (SKILL_ROOT / "scripts" / "parser_worker.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("subprocess", worker_text)
+        self.assertNotIn("http.client", worker_text)
 
     def test_repository_contains_open_source_release_files(self):
         required_files = {
